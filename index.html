@@ -211,7 +211,8 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 42px;
+      height: calc(42px + env(safe-area-inset-top, 0px));
+      padding-top: env(safe-area-inset-top, 0px);
       z-index: 6;
       display: flex;
       align-items: stretch;
@@ -461,6 +462,30 @@
     .ch-info-overlay .status.error { color: #ff6b6b; }
     .ch-info-overlay .status.ok { color: #4ee1c1; }
 
+    /* Prev/Next channel: big obvious tap zones, touch devices only (no need to know swipe direction) */
+    .ch-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 84px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,20,32,0.45);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 2rem;
+      line-height: 1;
+      z-index: 6;
+      cursor: pointer;
+    }
+    .ch-nav-prev { left: 0; border-radius: 0 16px 16px 0; }
+    .ch-nav-next { right: 0; border-radius: 16px 0 0 16px; }
+    @media (hover: none), (max-width: 860px) {
+      .ch-nav { display: flex; }
+    }
+
     /* Install-app button: shown only when the browser offers PWA install */
     .install-btn {
       position: absolute;
@@ -585,6 +610,8 @@
       </div>
       <button class="list-btn" id="listBtn" type="button" title="รายการช่อง">☰ ช่อง</button>
       <button class="install-btn" id="installBtn" type="button" title="ติดตั้งแอป">⬇️ ติดตั้งแอป</button>
+      <button class="ch-nav ch-nav-prev" id="chPrevBtn" type="button" title="ช่องก่อนหน้า">‹</button>
+      <button class="ch-nav ch-nav-next" id="chNextBtn" type="button" title="ช่องถัดไป">›</button>
       <button class="sound-btn" id="soundBtn" type="button" title="ปรับระดับเสียง">🔊</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
@@ -844,6 +871,10 @@
     menuBackdrop.addEventListener('click', closeMenu);
     var listBtn = document.getElementById('listBtn');
     if (listBtn) listBtn.addEventListener('click', function (e) { e.stopPropagation(); openMenu(); });
+    var chPrevBtn = document.getElementById('chPrevBtn');
+    var chNextBtn = document.getElementById('chNextBtn');
+    if (chPrevBtn) chPrevBtn.addEventListener('click', function (e) { e.stopPropagation(); changeChannel(-1); });
+    if (chNextBtn) chNextBtn.addEventListener('click', function (e) { e.stopPropagation(); changeChannel(1); });
 
     // Force a deterministic closed state on every fresh load, regardless of
     // any leftover browser-restored focus/scroll state.
@@ -901,8 +932,8 @@
       var rowsEl = document.getElementById('onboardingRows');
       if (rowsEl) {
         rowsEl.innerHTML =
-          '<div class="onboarding-row"><div class="onboarding-key">👆</div><div class="onboarding-desc">ปัดขวา หรือแตะปุ่ม “☰ ช่อง” เปิดรายการช่อง</div></div>' +
-          '<div class="onboarding-row"><div class="onboarding-key">👆</div><div class="onboarding-desc">ปัดขึ้น/ลง บนจอ เพื่อสลับช่อง</div></div>' +
+          '<div class="onboarding-row"><div class="onboarding-key">☰</div><div class="onboarding-desc">แตะปุ่ม “☰ ช่อง” มุมล่างซ้าย เปิดรายการช่อง</div></div>' +
+          '<div class="onboarding-row"><div class="onboarding-key">‹ ›</div><div class="onboarding-desc">แตะลูกศรซ้าย/ขวาข้างจอ เปลี่ยนช่อง (หรือปัดขึ้น/ลงก็ได้)</div></div>' +
           '<div class="onboarding-row"><div class="onboarding-key">🔊</div><div class="onboarding-desc">แตะปุ่มลำโพง ปรับระดับเสียง</div></div>' +
           '<div class="onboarding-row"><div class="onboarding-key">⛶</div><div class="onboarding-desc">แตะปุ่มขยายจอ เต็มหน้าจอ</div></div>';
       }
