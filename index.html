@@ -557,8 +557,6 @@
       showOverlay();
 
       if (hls) { hls.destroy(); hls = null; }
-      video.removeAttribute('src');
-      video.load();
 
       if (Hls.isSupported()) {
         hls = new Hls({
