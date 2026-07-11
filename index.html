@@ -25,12 +25,14 @@
       background: #0a1420;
       color: #eef2f7;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
 
     .app {
       position: relative;
       height: 100vh;
+      height: 100dvh;
     }
 
     /* ---- Backdrop + popup channel list ---- */
@@ -468,10 +470,25 @@
       gap: 7px;
     }
     @media (hover: none), (max-width: 860px) {
-      .list-btn { display: inline-flex; }
+      /* Prominent, easy-to-hit channel button; lifted above the mobile browser bar */
+      .list-btn {
+        display: inline-flex;
+        height: 54px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        padding: 0 24px;
+        background: #12707a;
+        border-color: rgba(255,255,255,0.45);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+        opacity: 1;
+      }
       /* Bigger tap targets on touch devices */
-      .sound-btn, .fs-btn { width: 46px; height: 46px; opacity: 0.85; }
-      .ch-row { padding: 15px 20px; }
+      .sound-btn, .fs-btn { width: 50px; height: 50px; opacity: 0.9; }
+      /* Keep bottom controls clear of the phone's browser/home bar */
+      .list-btn, .sound-btn, .fs-btn {
+        bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      }
+      .ch-row { padding: 16px 20px; }
       .ticker-item { padding: 0 22px; font-size: 0.8rem; }
       .clock { font-size: 0.9rem; padding: 0 12px; }
       .ticker-label { font-size: 0.72rem; padding: 0 10px; }
