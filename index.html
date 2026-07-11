@@ -198,16 +198,76 @@
       object-fit: contain;
       background: #000;
     }
-    .clock {
+    /* ---- Hotel info ticker bar ---- */
+    .ticker-bar {
       position: absolute;
-      top: 24px;
-      right: 28px;
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #fff;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
-      letter-spacing: 1px;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
+      z-index: 6;
+      display: flex;
+      align-items: stretch;
+      background: rgba(8,14,24,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       pointer-events: none;
+    }
+    .ticker-label {
+      flex: none;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      background: #12707a;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .ticker-viewport {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .ticker-track {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      display: flex;
+      animation: ticker-scroll 26s linear infinite;
+    }
+    .ticker-group {
+      display: flex;
+      align-items: center;
+      flex: none;
+    }
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      height: 42px;
+      padding: 0 32px;
+      font-size: 0.85rem;
+      color: #eaf1f8;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .clock {
+      flex: none;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
     .fs-btn {
       position: absolute;
@@ -263,7 +323,24 @@
   <div class="app">
     <div class="main">
       <video id="video" controls controlsList="nofullscreen" autoplay muted loop playsinline></video>
-      <div class="clock" id="clock"></div>
+      <div class="ticker-bar">
+        <div class="ticker-label">📢 ROYS HOTEL</div>
+        <div class="ticker-viewport">
+          <div class="ticker-track">
+            <div class="ticker-group">
+              <span class="ticker-item">🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
+              <span class="ticker-item">🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
+              <span class="ticker-item">📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
+            </div>
+            <div class="ticker-group" aria-hidden="true">
+              <span class="ticker-item">🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
+              <span class="ticker-item">🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
+              <span class="ticker-item">📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
+            </div>
+          </div>
+        </div>
+        <div class="clock" id="clock"></div>
+      </div>
       <button class="menu-btn" id="menuBtn" type="button" title="รายการช่อง">☰</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="ch-info-overlay" id="chInfoOverlay">
