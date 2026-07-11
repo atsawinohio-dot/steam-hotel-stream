@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steam Hotel — Live Stream</title>
+  <title>Steam Hotel — IPTV</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,21 +12,26 @@
       background: #0a0e14;
       color: #e6edf3;
       min-height: 100vh;
+      padding: 20px;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
       gap: 20px;
     }
     h1 {
       font-size: 1.4rem;
       font-weight: 600;
       letter-spacing: 0.5px;
+      text-align: center;
     }
     .player-wrap {
+      position: sticky;
+      top: 12px;
+      z-index: 10;
       width: 100%;
-      max-width: 960px;
       background: #000;
       border-radius: 12px;
       overflow: hidden;
@@ -38,6 +43,75 @@
       aspect-ratio: 16 / 9;
       background: #000;
     }
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #11161f;
+      font-size: 0.9rem;
+    }
+    .now-playing img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #1c2330;
+    }
+    .now-playing .status {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: #7d8590;
+    }
+    .now-playing .status.error { color: #f85149; }
+    .now-playing .status.ok { color: #3fb950; }
+
+    .group h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #7d8590;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .channel {
+      background: #11161f;
+      border: 1px solid #1e2530;
+      border-radius: 10px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+      text-align: center;
+    }
+    .channel:hover {
+      border-color: #388bfd;
+      transform: translateY(-2px);
+    }
+    .channel.active {
+      border-color: #58a6ff;
+      background: #142033;
+    }
+    .channel img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #1c2330;
+    }
+    .channel .name {
+      font-size: 0.8rem;
+      line-height: 1.25;
+    }
     .note {
       font-size: 0.85rem;
       color: #7d8590;
@@ -47,30 +121,150 @@
   </style>
 </head>
 <body>
-  <h1>🏨 Steam Hotel</h1>
-  <div class="player-wrap">
-    <video id="video" controls autoplay muted loop playsinline></video>
+  <div class="wrap">
+    <h1>🏨 Steam Hotel — IPTV</h1>
+
+    <div class="player-wrap">
+      <video id="video" controls autoplay muted loop playsinline></video>
+      <div class="now-playing">
+        <img id="npLogo" src="" alt="">
+        <span id="npName">กำลังโหลด…</span>
+        <span id="npStatus" class="status"></span>
+      </div>
+    </div>
+
+    <div id="channels"></div>
+
+    <p class="note">รายชื่อช่องทั้งหมด • <a href="iptv.m3u8">iptv.m3u8</a></p>
   </div>
-  <p class="note">HLS stream • <a id="m3u8link" href="playlist.m3u8">playlist.m3u8</a></p>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
   <script>
     var video = document.getElementById('video');
-    var src = 'playlist.m3u8';
-    if (Hls.isSupported()) {
-      var hls = new Hls();
-      hls.loadSource(src);
-      hls.attachMedia(video);
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari / iOS native HLS
-      video.src = src;
+    var npLogo = document.getElementById('npLogo');
+    var npName = document.getElementById('npName');
+    var npStatus = document.getElementById('npStatus');
+    var channelsEl = document.getElementById('channels');
+    var hls = null;
+
+    function parseM3U(text) {
+      var lines = text.split(/\r?\n/);
+      var items = [];
+      var pending = null;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        if (line.indexOf('#EXTINF') === 0) {
+          var comma = line.lastIndexOf(',');
+          var attrsPart = line.substring(0, comma);
+          var name = line.substring(comma + 1).trim();
+          var logo = (attrsPart.match(/tvg-logo="([^"]*)"/) || [])[1] || '';
+          var group = (attrsPart.match(/group-title="([^"]*)"/) || [])[1] || 'อื่นๆ';
+          group = group.split(';')[0];
+          pending = { name: name, logo: logo, group: group };
+        } else if (line.indexOf('#') !== 0 && pending) {
+          pending.url = line;
+          items.push(pending);
+          pending = null;
+        }
+      }
+      return items;
     }
 
-    // Fallback in case native loop doesn't restart with MSE-backed HLS
+    function loadChannel(item, cardEl) {
+      document.querySelectorAll('.channel.active').forEach(function (el) { el.classList.remove('active'); });
+      if (cardEl) cardEl.classList.add('active');
+
+      npLogo.src = item.logo;
+      npLogo.style.display = item.logo ? '' : 'none';
+      npName.textContent = item.name;
+      npStatus.textContent = 'กำลังเชื่อมต่อ…';
+      npStatus.className = 'status';
+
+      if (hls) { hls.destroy(); hls = null; }
+      video.removeAttribute('src');
+      video.load();
+
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          npStatus.textContent = 'เล่นอยู่';
+          npStatus.className = 'status ok';
+        });
+        hls.on(Hls.Events.ERROR, function (evt, data) {
+          if (data.fatal) {
+            npStatus.textContent = 'เล่นช่องนี้ไม่ได้';
+            npStatus.className = 'status error';
+          }
+        });
+        hls.loadSource(item.url);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = item.url;
+        video.addEventListener('loadedmetadata', function () {
+          npStatus.textContent = 'เล่นอยู่';
+          npStatus.className = 'status ok';
+        }, { once: true });
+        video.addEventListener('error', function () {
+          npStatus.textContent = 'เล่นช่องนี้ไม่ได้';
+          npStatus.className = 'status error';
+        }, { once: true });
+      }
+      video.play().catch(function () {});
+    }
+
     video.addEventListener('ended', function () {
       video.currentTime = 0;
       video.play();
     });
+
+    fetch('iptv.m3u8')
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        var items = parseM3U(text);
+        var groups = {};
+        var order = [];
+        items.forEach(function (it) {
+          if (!groups[it.group]) { groups[it.group] = []; order.push(it.group); }
+          groups[it.group].push(it);
+        });
+
+        order.forEach(function (groupName) {
+          var section = document.createElement('div');
+          section.className = 'group';
+          var h2 = document.createElement('h2');
+          h2.textContent = groupName;
+          var grid = document.createElement('div');
+          grid.className = 'grid';
+          groups[groupName].forEach(function (item) {
+            var card = document.createElement('div');
+            card.className = 'channel';
+            var img = document.createElement('img');
+            img.src = item.logo;
+            img.alt = item.name;
+            img.onerror = function () { img.style.visibility = 'hidden'; };
+            var name = document.createElement('div');
+            name.className = 'name';
+            name.textContent = item.name;
+            card.appendChild(img);
+            card.appendChild(name);
+            card.addEventListener('click', function () { loadChannel(item, card); });
+            grid.appendChild(card);
+          });
+          section.appendChild(h2);
+          section.appendChild(grid);
+          channelsEl.appendChild(section);
+        });
+
+        if (items.length) {
+          var firstCard = channelsEl.querySelector('.channel');
+          loadChannel(items[0], firstCard);
+        }
+      })
+      .catch(function () {
+        npName.textContent = 'โหลดรายชื่อช่องไม่สำเร็จ';
+        npStatus.textContent = '';
+      });
   </script>
 </body>
 </html>
