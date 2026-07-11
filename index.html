@@ -2,8 +2,18 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steam Hotel — IPTV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ROYS Hotel IPTV</title>
+  <!-- PWA: installable web app on any device -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#12707a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ROYS TV">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <!-- Warm up DNS for channel CDNs so switching channels feels faster -->
   <link rel="dns-prefetch" href="//live-us1.thaimomo.com">
   <link rel="dns-prefetch" href="//639bc5877c5fe.streamlock.net">
@@ -451,6 +461,27 @@
     .ch-info-overlay .status.error { color: #ff6b6b; }
     .ch-info-overlay .status.ok { color: #4ee1c1; }
 
+    /* Install-app button: shown only when the browser offers PWA install */
+    .install-btn {
+      position: absolute;
+      top: 52px;
+      right: 16px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: #12707a;
+      border: 1px solid rgba(255,255,255,0.45);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      height: 38px;
+      padding: 0 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      z-index: 8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+
     /* Channel-list button: only shown on touch / small screens (desktop uses arrow keys) */
     .list-btn {
       position: absolute;
@@ -553,6 +584,7 @@
         <input type="range" id="volumeSlider" min="0" max="100" value="100">
       </div>
       <button class="list-btn" id="listBtn" type="button" title="รายการช่อง">☰ ช่อง</button>
+      <button class="install-btn" id="installBtn" type="button" title="ติดตั้งแอป">⬇️ ติดตั้งแอป</button>
       <button class="sound-btn" id="soundBtn" type="button" title="ปรับระดับเสียง">🔊</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
@@ -976,6 +1008,35 @@
         npStatus.textContent = '';
         chInfoOverlay.classList.add('show');
       });
+
+    // ---- PWA: register service worker + install button ----
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () {});
+      });
+    }
+
+    var installBtn = document.getElementById('installBtn');
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+    if (installBtn) {
+      installBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(function () {
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        });
+      });
+    }
+    window.addEventListener('appinstalled', function () {
+      if (installBtn) installBtn.style.display = 'none';
+    });
   </script>
 </body>
 </html>
