@@ -16,19 +16,63 @@
     }
 
     .app {
-      display: flex;
+      position: relative;
       height: 100vh;
     }
 
-    /* ---- Sidebar (numbered channel list) ---- */
+    /* ---- Backdrop + popup channel list ---- */
+    .menu-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .menu-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
       width: 400px;
-      flex: none;
+      max-width: 86vw;
       background: #0b1626;
       border-right: 1px solid #16263b;
       display: flex;
       flex-direction: column;
+      z-index: 21;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      box-shadow: 12px 0 40px rgba(0,0,0,0.5);
     }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .sidebar-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 16px 0;
+    }
+    .sidebar-head .search-box { flex: 1; margin: 0; }
+    .close-btn {
+      flex: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #22354e;
+      background: #16263b;
+      color: #eef2f7;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .close-btn:hover { border-color: #4ee1c1; }
     .search-box {
       display: flex;
       align-items: center;
@@ -131,10 +175,27 @@
 
     /* ---- Main video panel ---- */
     .main {
-      flex: 1;
-      position: relative;
+      position: absolute;
+      inset: 0;
       background: #000;
     }
+    .menu-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 70px;
+      background: rgba(10,20,32,0.55);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 1.1rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.15s;
+      z-index: 5;
+    }
+    .menu-btn:hover { opacity: 1; }
     video {
       width: 100%;
       height: 100%;
@@ -199,26 +260,16 @@
     .ch-info-overlay .status.ok { color: #4ee1c1; }
 
     @media (max-width: 860px) {
-      body { overflow: auto; height: auto; }
-      .app { flex-direction: column; height: auto; }
-      .sidebar { width: 100%; height: 50vh; order: 2; }
-      .main { height: 46vh; order: 1; }
+      .sidebar { width: 86vw; }
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar">
-      <div class="search-box">
-        <input id="searchInput" type="text" placeholder="ค้นหาช่อง...">
-        <span class="icon">🔍</span>
-      </div>
-      <div class="ch-list" id="chList"></div>
-    </aside>
-
     <div class="main">
       <video id="video" controls controlsList="nofullscreen" autoplay muted loop playsinline></video>
       <div class="clock" id="clock"></div>
+      <button class="menu-btn" id="menuBtn" type="button" title="รายการช่อง">☰</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="ch-info-overlay" id="chInfoOverlay">
         <img id="npLogo" src="" alt="">
@@ -228,6 +279,18 @@
         </div>
       </div>
     </div>
+
+    <div class="menu-backdrop" id="menuBackdrop"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="search-box">
+          <input id="searchInput" type="text" placeholder="ค้นหาช่อง...">
+          <span class="icon">🔍</span>
+        </div>
+        <button class="close-btn" id="closeBtn" type="button">✕</button>
+      </div>
+      <div class="ch-list" id="chList"></div>
+    </aside>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
@@ -350,6 +413,27 @@
       }
     });
 
+    var sidebar = document.getElementById('sidebar');
+    var menuBackdrop = document.getElementById('menuBackdrop');
+    var menuBtn = document.getElementById('menuBtn');
+    var closeBtn = document.getElementById('closeBtn');
+
+    function openMenu() {
+      sidebar.classList.add('open');
+      menuBackdrop.classList.add('open');
+      searchInput.focus();
+    }
+    function closeMenu() {
+      sidebar.classList.remove('open');
+      menuBackdrop.classList.remove('open');
+    }
+    menuBtn.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    menuBackdrop.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+
     function updateClock() {
       var d = new Date();
       var h = d.getHours();
@@ -407,7 +491,7 @@
         row.appendChild(divider);
         row.appendChild(name);
         row.appendChild(logoBox);
-        row.addEventListener('click', function () { loadChannel(item, row); });
+        row.addEventListener('click', function () { loadChannel(item, row); closeMenu(); });
         chListEl.appendChild(row);
       });
 
