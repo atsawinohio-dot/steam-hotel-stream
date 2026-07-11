@@ -449,6 +449,34 @@
     .ch-info-overlay .status.error { color: #ff6b6b; }
     .ch-info-overlay .status.ok { color: #4ee1c1; }
 
+    /* Channel-list button: only shown on touch / small screens (desktop uses arrow keys) */
+    .list-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(10,20,32,0.6);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 0.95rem;
+      height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      z-index: 6;
+      display: none;
+      align-items: center;
+      gap: 7px;
+    }
+    @media (hover: none), (max-width: 860px) {
+      .list-btn { display: inline-flex; }
+      /* Bigger tap targets on touch devices */
+      .sound-btn, .fs-btn { width: 46px; height: 46px; opacity: 0.85; }
+      .ch-row { padding: 15px 20px; }
+      .ticker-item { padding: 0 22px; font-size: 0.8rem; }
+      .clock { font-size: 0.9rem; padding: 0 12px; }
+      .ticker-label { font-size: 0.72rem; padding: 0 10px; }
+    }
+
     @media (max-width: 860px) {
       .sidebar { width: 86vw; }
     }
@@ -459,25 +487,27 @@
     <div class="onboarding" id="onboarding">
       <div class="onboarding-card">
         <div class="onboarding-title">👋 วิธีใช้งานเบื้องต้น</div>
-        <div class="onboarding-row">
-          <div class="onboarding-key">⬅️</div>
-          <div class="onboarding-desc">กดซ้าย เปิดรายการช่องทั้งหมด</div>
-        </div>
-        <div class="onboarding-row">
-          <div class="onboarding-key">⬆️⬇️</div>
-          <div class="onboarding-desc">กดขึ้น/ลง เลือกและสลับช่อง</div>
-        </div>
-        <div class="onboarding-row">
-          <div class="onboarding-key">➡️</div>
-          <div class="onboarding-desc">กดขวา ปิดรายการช่อง</div>
-        </div>
-        <div class="onboarding-row">
-          <div class="onboarding-key">🔊</div>
-          <div class="onboarding-desc">ปุ่มลำโพงมุมขวาล่าง ปรับระดับเสียง</div>
-        </div>
-        <div class="onboarding-row">
-          <div class="onboarding-key">⛶</div>
-          <div class="onboarding-desc">ปุ่มขยายจอ เต็มหน้าจอ</div>
+        <div id="onboardingRows">
+          <div class="onboarding-row">
+            <div class="onboarding-key">⬅️</div>
+            <div class="onboarding-desc">กดซ้าย เปิดรายการช่องทั้งหมด</div>
+          </div>
+          <div class="onboarding-row">
+            <div class="onboarding-key">⬆️⬇️</div>
+            <div class="onboarding-desc">กดขึ้น/ลง เลือกและสลับช่อง</div>
+          </div>
+          <div class="onboarding-row">
+            <div class="onboarding-key">➡️</div>
+            <div class="onboarding-desc">กดขวา ปิดรายการช่อง</div>
+          </div>
+          <div class="onboarding-row">
+            <div class="onboarding-key">🔊</div>
+            <div class="onboarding-desc">ปุ่มลำโพงมุมขวาล่าง ปรับระดับเสียง</div>
+          </div>
+          <div class="onboarding-row">
+            <div class="onboarding-key">⛶</div>
+            <div class="onboarding-desc">ปุ่มขยายจอ เต็มหน้าจอ</div>
+          </div>
         </div>
         <button class="onboarding-close" id="onboardingClose" type="button">เข้าใจแล้ว เริ่มใช้งาน</button>
       </div>
@@ -505,6 +535,7 @@
       <div class="volume-popup" id="volumePopup">
         <input type="range" id="volumeSlider" min="0" max="100" value="100">
       </div>
+      <button class="list-btn" id="listBtn" type="button" title="รายการช่อง">☰ ช่อง</button>
       <button class="sound-btn" id="soundBtn" type="button" title="ปรับระดับเสียง">🔊</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
@@ -762,6 +793,8 @@
     }
     closeBtn.addEventListener('click', closeMenu);
     menuBackdrop.addEventListener('click', closeMenu);
+    var listBtn = document.getElementById('listBtn');
+    if (listBtn) listBtn.addEventListener('click', function (e) { e.stopPropagation(); openMenu(); });
 
     // Force a deterministic closed state on every fresh load, regardless of
     // any leftover browser-restored focus/scroll state.
@@ -810,6 +843,45 @@
       else if (e.key === 'ArrowLeft') { e.preventDefault(); openMenu(); }
       else if (e.key === 'ArrowRight') { e.preventDefault(); closeMenu(); }
     });
+
+    // ---- Touch / mobile support ----
+    var isTouch = window.matchMedia('(hover: none)').matches || ('ontouchstart' in window);
+
+    // Swap onboarding instructions to touch gestures on phones/tablets
+    if (isTouch) {
+      var rowsEl = document.getElementById('onboardingRows');
+      if (rowsEl) {
+        rowsEl.innerHTML =
+          '<div class="onboarding-row"><div class="onboarding-key">👆</div><div class="onboarding-desc">ปัดขวา หรือแตะปุ่ม “☰ ช่อง” เปิดรายการช่อง</div></div>' +
+          '<div class="onboarding-row"><div class="onboarding-key">👆</div><div class="onboarding-desc">ปัดขึ้น/ลง บนจอ เพื่อสลับช่อง</div></div>' +
+          '<div class="onboarding-row"><div class="onboarding-key">🔊</div><div class="onboarding-desc">แตะปุ่มลำโพง ปรับระดับเสียง</div></div>' +
+          '<div class="onboarding-row"><div class="onboarding-key">⛶</div><div class="onboarding-desc">แตะปุ่มขยายจอ เต็มหน้าจอ</div></div>';
+      }
+    }
+
+    // Swipe gestures on the video area
+    var mainEl2 = document.querySelector('.main');
+    var swStartX = 0, swStartY = 0, swStartT = 0, swValid = false;
+    mainEl2.addEventListener('touchstart', function (e) {
+      dismissOnboarding();
+      // ignore gestures that begin on a control
+      swValid = !e.target.closest('.volume-popup, button');
+      var t = e.changedTouches[0];
+      swStartX = t.clientX; swStartY = t.clientY; swStartT = Date.now();
+    }, { passive: true });
+    mainEl2.addEventListener('touchend', function (e) {
+      if (!swValid) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - swStartX, dy = t.clientY - swStartY, dt = Date.now() - swStartT;
+      if (dt > 900) return;
+      var adx = Math.abs(dx), ady = Math.abs(dy);
+      if (Math.max(adx, ady) < 45) return; // treat as a tap, not a swipe
+      if (adx > ady) {
+        if (dx > 0) openMenu(); else closeMenu();
+      } else {
+        if (dy < 0) changeChannel(1); else changeChannel(-1); // swipe up = next channel
+      }
+    }, { passive: true });
 
     function updateClock() {
       var d = new Date();
