@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Steam Hotel — IPTV</title>
+  <!-- Warm up DNS for channel CDNs so switching channels feels faster -->
+  <link rel="dns-prefetch" href="//live-us1.thaimomo.com">
+  <link rel="dns-prefetch" href="//639bc5877c5fe.streamlock.net">
+  <link rel="dns-prefetch" href="//live-cdn.ch7.com">
+  <link rel="dns-prefetch" href="//mcothd-streaming-edge-cdn.mcot.net">
+  <link rel="dns-prefetch" href="//dash2.antik.sk">
+  <link rel="dns-prefetch" href="//live-hls-apps-aja-fa.getaj.net">
+  <link rel="dns-prefetch" href="//amdlive-ch01-ctnd-com.akamaized.net">
+  <link rel="dns-prefetch" href="//nhk.lls.pbs.org">
+  <link rel="dns-prefetch" href="//jmp2.uk">
+  <link rel="dns-prefetch" href="//trace-sportstars-samsungnz.amagi.tv">
+  <link rel="dns-prefetch" href="//1a3566cb46914c5499fbc86fbc4ac87e.mediatailor.us-west-2.amazonaws.com">
+  <link rel="dns-prefetch" href="//amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv">
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -550,7 +563,11 @@
       video.load();
 
       if (Hls.isSupported()) {
-        hls = new Hls();
+        hls = new Hls({
+          manifestLoadingTimeOut: 8000,
+          manifestLoadingMaxRetry: 2,
+          fragLoadingTimeOut: 15000
+        });
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
           npStatus.textContent = 'เล่นอยู่';
           npStatus.className = 'status ok';
