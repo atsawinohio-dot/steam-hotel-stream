@@ -287,6 +287,29 @@
     }
     .sound-btn:hover { opacity: 1; }
 
+    .volume-popup {
+      position: absolute;
+      bottom: 68px;
+      right: 120px;
+      width: 40px;
+      height: 130px;
+      background: rgba(10,20,32,0.8);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      z-index: 6;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 0;
+    }
+    .volume-popup.show { display: flex; }
+    .volume-popup input[type="range"] {
+      width: 90px;
+      transform: rotate(-90deg);
+      cursor: pointer;
+      accent-color: #4ee1c1;
+    }
+
     .sound-prompt {
       position: absolute;
       left: 50%;
@@ -369,7 +392,10 @@
         </div>
         <div class="clock" id="clock"></div>
       </div>
-      <button class="sound-btn" id="soundBtn" type="button" title="เปิด/ปิดเสียง">🔊</button>
+      <div class="volume-popup" id="volumePopup">
+        <input type="range" id="volumeSlider" min="0" max="100" value="100">
+      </div>
+      <button class="sound-btn" id="soundBtn" type="button" title="ปรับระดับเสียง">🔊</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
       <div class="ch-info-overlay" id="chInfoOverlay">
@@ -438,17 +464,38 @@
     });
 
     var soundBtn = document.getElementById('soundBtn');
-    function updateSoundIcon() { soundBtn.textContent = video.muted ? '🔇' : '🔊'; }
+    var volumePopup = document.getElementById('volumePopup');
+    var volumeSlider = document.getElementById('volumeSlider');
+
+    function updateSoundIcon() {
+      var muted = video.muted || video.volume === 0;
+      soundBtn.textContent = muted ? '🔇' : (video.volume < 0.5 ? '🔉' : '🔊');
+      volumeSlider.value = Math.round((muted ? 0 : video.volume) * 100);
+    }
+
     soundBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      video.muted = !video.muted;
-      if (!video.muted) {
+      volumePopup.classList.toggle('show');
+    });
+
+    volumeSlider.addEventListener('input', function () {
+      var v = Number(volumeSlider.value) / 100;
+      video.volume = v;
+      video.muted = false;
+      if (v > 0) {
         soundUnlocked = true;
         video.play().catch(function () {});
         soundPrompt.classList.remove('show');
       }
       updateSoundIcon();
     });
+
+    document.addEventListener('click', function (e) {
+      if (!volumePopup.contains(e.target) && e.target !== soundBtn) {
+        volumePopup.classList.remove('show');
+      }
+    });
+
     video.addEventListener('volumechange', updateSoundIcon);
     updateSoundIcon();
 
