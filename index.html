@@ -322,6 +322,79 @@
       accent-color: #4ee1c1;
     }
 
+    .onboarding {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,10,18,0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.35s ease;
+      cursor: pointer;
+    }
+    .onboarding.hide { opacity: 0; pointer-events: none; }
+    .onboarding-card {
+      width: 90%;
+      max-width: 380px;
+      background: rgba(15,24,38,0.92);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 18px;
+      padding: 28px 26px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      cursor: default;
+    }
+    .onboarding-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .onboarding-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .onboarding-row:last-of-type { border-bottom: none; }
+    .onboarding-key {
+      flex: none;
+      min-width: 40px;
+      height: 34px;
+      padding: 0 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: #4ee1c1;
+    }
+    .onboarding-desc {
+      font-size: 0.88rem;
+      color: #dbe6f2;
+      line-height: 1.4;
+    }
+    .onboarding-close {
+      margin: 20px auto 0;
+      display: block;
+      background: #12707a;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .onboarding-close:hover { background: #158a96; }
+
     .sound-prompt {
       position: absolute;
       left: 50%;
@@ -383,6 +456,32 @@
 </head>
 <body>
   <div class="app">
+    <div class="onboarding" id="onboarding">
+      <div class="onboarding-card">
+        <div class="onboarding-title">👋 วิธีใช้งานเบื้องต้น</div>
+        <div class="onboarding-row">
+          <div class="onboarding-key">⬅️</div>
+          <div class="onboarding-desc">กดซ้าย เปิดรายการช่องทั้งหมด</div>
+        </div>
+        <div class="onboarding-row">
+          <div class="onboarding-key">⬆️⬇️</div>
+          <div class="onboarding-desc">กดขึ้น/ลง เลือกและสลับช่อง</div>
+        </div>
+        <div class="onboarding-row">
+          <div class="onboarding-key">➡️</div>
+          <div class="onboarding-desc">กดขวา ปิดรายการช่อง</div>
+        </div>
+        <div class="onboarding-row">
+          <div class="onboarding-key">🔊</div>
+          <div class="onboarding-desc">ปุ่มลำโพงมุมขวาล่าง ปรับระดับเสียง</div>
+        </div>
+        <div class="onboarding-row">
+          <div class="onboarding-key">⛶</div>
+          <div class="onboarding-desc">ปุ่มขยายจอ เต็มหน้าจอ</div>
+        </div>
+        <button class="onboarding-close" id="onboardingClose" type="button">เข้าใจแล้ว เริ่มใช้งาน</button>
+      </div>
+    </div>
     <div class="main">
       <video id="video" autoplay muted loop playsinline></video>
       <div class="ticker-bar">
@@ -636,6 +735,24 @@
     // Force a deterministic closed state on every fresh load, regardless of
     // any leftover browser-restored focus/scroll state.
     closeMenu();
+
+    var onboarding = document.getElementById('onboarding');
+    var onboardingClose = document.getElementById('onboardingClose');
+    var onboardingTimer = null;
+    function dismissOnboarding() {
+      if (!onboarding) return;
+      onboarding.classList.add('hide');
+      clearTimeout(onboardingTimer);
+    }
+    if (onboarding) {
+      onboarding.addEventListener('click', dismissOnboarding);
+      onboardingClose.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dismissOnboarding();
+      });
+      document.addEventListener('keydown', dismissOnboarding, { once: true });
+      onboardingTimer = setTimeout(dismissOnboarding, 10000);
+    }
 
     function changeChannel(delta) {
       if (!allItems.length) return;
