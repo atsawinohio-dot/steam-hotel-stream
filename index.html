@@ -9,241 +9,223 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #05070c;
-      color: #e6edf3;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 18px;
-      background: #0a0e14;
-      border-bottom: 1px solid #1b212c;
-    }
-    .topbar h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .topbar .count {
-      font-size: 0.75rem;
-      color: #7d8590;
-      white-space: nowrap;
+      background: #0a1420;
+      color: #eef2f7;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .app {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 16px;
-      padding: 16px;
-      align-items: start;
+      display: flex;
+      height: 100vh;
     }
 
-    /* ---- Sidebar (channel list) ---- */
+    /* ---- Sidebar (numbered channel list) ---- */
     .sidebar {
-      background: #0d1119;
-      border: 1px solid #1b212c;
-      border-radius: 12px;
-      overflow: hidden;
-      position: sticky;
-      top: 16px;
-      max-height: calc(100vh - 32px);
+      width: 400px;
+      flex: none;
+      background: #0b1626;
+      border-right: 1px solid #16263b;
       display: flex;
       flex-direction: column;
     }
     .search-box {
-      padding: 12px;
-      border-bottom: 1px solid #1b212c;
-    }
-    .search-box input {
-      width: 100%;
-      background: #161c27;
-      border: 1px solid #262e3d;
-      color: #e6edf3;
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 0.88rem;
-      outline: none;
-    }
-    .search-box input:focus { border-color: #58a6ff; }
-
-    .tabs {
-      display: flex;
-      gap: 6px;
-      padding: 10px 12px;
-      overflow-x: auto;
-      border-bottom: 1px solid #1b212c;
-      scrollbar-width: thin;
-    }
-    .tab {
-      flex: none;
-      background: #161c27;
-      border: 1px solid #262e3d;
-      color: #9aa4b2;
-      font-size: 0.76rem;
-      padding: 6px 12px;
-      border-radius: 999px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .tab:hover { color: #e6edf3; }
-    .tab.active {
-      background: #1f6feb;
-      border-color: #1f6feb;
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .ch-list {
-      overflow-y: auto;
-      flex: 1;
-      padding: 6px;
-    }
-    .ch-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 8px;
-      border-radius: 8px;
+      margin: 16px;
+      padding: 10px 16px;
+      background: #16263b;
+      border-radius: 999px;
+    }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #eef2f7;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .search-box input::placeholder { color: #5c7290; }
+    .search-box .icon { color: #5c7290; font-size: 1rem; }
+
+    .ch-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 16px;
+    }
+    .ch-list::-webkit-scrollbar { width: 6px; }
+    .ch-list::-webkit-scrollbar-thumb { background: #2a4160; border-radius: 3px; }
+
+    .group-header {
+      padding: 14px 20px 8px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .ch-row {
+      display: grid;
+      grid-template-columns: 40px 1px 1fr 60px;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
       cursor: pointer;
+      position: relative;
     }
-    .ch-row:hover { background: #161c27; }
+    .ch-row:hover { background: #10203380; }
     .ch-row.active {
-      background: #142033;
-      box-shadow: inset 3px 0 0 #58a6ff;
+      background: #12707a;
     }
-    .ch-row img {
-      width: 36px;
-      height: 36px;
-      object-fit: contain;
-      border-radius: 6px;
-      background: #1c2330;
-      flex: none;
+    .ch-row.active::before {
+      content: "▶";
+      position: absolute;
+      left: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      color: #7fe8e0;
     }
-    .ch-row .ch-meta { min-width: 0; }
-    .ch-row .ch-name {
-      font-size: 0.85rem;
+    .ch-num {
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: #7d90ab;
+      text-align: right;
+    }
+    .ch-row.active .ch-num { color: #d8fbf7; }
+    .ch-divider {
+      width: 1px;
+      height: 26px;
+      background: #22354e;
+    }
+    .ch-name {
+      font-size: 1rem;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .ch-row .ch-group {
-      font-size: 0.72rem;
-      color: #7d8590;
-      white-space: nowrap;
+    .ch-logo-box {
+      width: 56px;
+      height: 36px;
+      border-radius: 6px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
-      text-overflow: ellipsis;
+      flex: none;
+    }
+    .ch-logo-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
     .empty-msg {
-      padding: 24px 12px;
+      padding: 30px 20px;
       text-align: center;
-      color: #7d8590;
-      font-size: 0.85rem;
+      color: #5c7290;
+      font-size: 0.9rem;
     }
 
-    /* ---- Main / player ---- */
+    /* ---- Main video panel ---- */
     .main {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+      flex: 1;
+      position: relative;
       background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
     }
     video {
       width: 100%;
+      height: 100%;
       display: block;
-      aspect-ratio: 16 / 9;
+      object-fit: contain;
       background: #000;
     }
-    .now-playing {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #11161f;
-      font-size: 0.9rem;
-    }
-    .now-playing img {
-      width: 28px;
-      height: 28px;
-      object-fit: contain;
-      border-radius: 4px;
-      background: #1c2330;
-    }
-    .now-playing .name { font-weight: 600; }
-    .now-playing .status {
-      margin-left: auto;
-      font-size: 0.78rem;
-      color: #7d8590;
-    }
-    .now-playing .status.error { color: #f85149; }
-    .now-playing .status.ok { color: #3fb950; }
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #f85149;
-      display: inline-block;
+    .clock {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+      letter-spacing: 1px;
+      pointer-events: none;
     }
     .fs-btn {
-      background: #1c2330;
-      border: 1px solid #2a3444;
-      color: #e6edf3;
-      font-size: 0.78rem;
-      padding: 6px 12px;
-      border-radius: 6px;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10,20,32,0.55);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 1.1rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.15s;
     }
-    .fs-btn:hover { border-color: #58a6ff; }
+    .fs-btn:hover { opacity: 1; }
 
-    .app:fullscreen,
-    .main:fullscreen {
-      height: 100vh;
-      background: #05070c;
+    .ch-info-overlay {
+      position: absolute;
+      left: 28px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(8,14,24,0.55);
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
     }
-    .main:fullscreen video { max-height: 78vh; }
-
-    a { color: #58a6ff; text-decoration: none; }
+    .ch-info-overlay.show { opacity: 1; }
+    .ch-info-overlay img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .ch-info-overlay .name { font-weight: 600; font-size: 1rem; }
+    .ch-info-overlay .status { font-size: 0.78rem; color: #9aa9bd; }
+    .ch-info-overlay .status.error { color: #ff6b6b; }
+    .ch-info-overlay .status.ok { color: #4ee1c1; }
 
     @media (max-width: 860px) {
-      .app {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        position: static;
-        max-height: 60vh;
-        order: 2;
-      }
-      .main { order: 1; }
+      body { overflow: auto; height: auto; }
+      .app { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; height: 50vh; order: 2; }
+      .main { height: 46vh; order: 1; }
     }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <h1>🏨 Steam Hotel IPTV</h1>
-    <span class="count" id="chCount"></span>
-  </div>
-
   <div class="app">
     <aside class="sidebar">
       <div class="search-box">
         <input id="searchInput" type="text" placeholder="ค้นหาช่อง...">
+        <span class="icon">🔍</span>
       </div>
-      <div class="tabs" id="tabs"></div>
       <div class="ch-list" id="chList"></div>
     </aside>
 
     <div class="main">
       <video id="video" controls controlsList="nofullscreen" autoplay muted loop playsinline></video>
-      <div class="now-playing">
+      <div class="clock" id="clock"></div>
+      <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
+      <div class="ch-info-overlay" id="chInfoOverlay">
         <img id="npLogo" src="" alt="">
-        <span class="name" id="npName">กำลังโหลด…</span>
-        <span id="npStatus" class="status"></span>
-        <button id="fsBtn" class="fs-btn" type="button">⛶ เต็มจอ</button>
+        <div>
+          <div class="name" id="npName">กำลังโหลด…</div>
+          <div class="status" id="npStatus"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -254,14 +236,22 @@
     var npLogo = document.getElementById('npLogo');
     var npName = document.getElementById('npName');
     var npStatus = document.getElementById('npStatus');
+    var chInfoOverlay = document.getElementById('chInfoOverlay');
     var chListEl = document.getElementById('chList');
-    var tabsEl = document.getElementById('tabs');
     var searchInput = document.getElementById('searchInput');
-    var chCountEl = document.getElementById('chCount');
     var hls = null;
     var allItems = [];
-    var activeGroup = 'ทั้งหมด';
     var activeUrl = null;
+    var overlayTimer = null;
+    var groupColors = ['#ff4757', '#ffa502', '#2ed573', '#3498db', '#a55eea', '#ff6b81', '#17c0eb', '#f8c291'];
+    var groupColorMap = {};
+
+    function colorForGroup(g) {
+      if (!groupColorMap[g]) {
+        groupColorMap[g] = groupColors[Object.keys(groupColorMap).length % groupColors.length];
+      }
+      return groupColorMap[g];
+    }
 
     function parseM3U(text) {
       var lines = text.split(/\r?\n/);
@@ -287,6 +277,16 @@
       return items;
     }
 
+    function showOverlay() {
+      chInfoOverlay.classList.add('show');
+      clearTimeout(overlayTimer);
+      overlayTimer = setTimeout(function () {
+        if (npStatus.className.indexOf('error') === -1) {
+          chInfoOverlay.classList.remove('show');
+        }
+      }, 3500);
+    }
+
     function loadChannel(item, rowEl) {
       document.querySelectorAll('.ch-row.active').forEach(function (el) { el.classList.remove('active'); });
       if (rowEl) rowEl.classList.add('active');
@@ -295,8 +295,9 @@
       npLogo.src = item.logo;
       npLogo.style.display = item.logo ? '' : 'none';
       npName.textContent = item.name;
-      npStatus.innerHTML = '<span class="live-dot"></span> กำลังเชื่อมต่อ…';
+      npStatus.textContent = 'กำลังเชื่อมต่อ…';
       npStatus.className = 'status';
+      showOverlay();
 
       if (hls) { hls.destroy(); hls = null; }
       video.removeAttribute('src');
@@ -305,13 +306,15 @@
       if (Hls.isSupported()) {
         hls = new Hls();
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          npStatus.innerHTML = '<span class="live-dot"></span> เล่นอยู่';
+          npStatus.textContent = 'เล่นอยู่';
           npStatus.className = 'status ok';
+          showOverlay();
         });
         hls.on(Hls.Events.ERROR, function (evt, data) {
           if (data.fatal) {
             npStatus.textContent = 'เล่นช่องนี้ไม่ได้';
             npStatus.className = 'status error';
+            chInfoOverlay.classList.add('show');
           }
         });
         hls.loadSource(item.url);
@@ -319,12 +322,14 @@
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = item.url;
         video.addEventListener('loadedmetadata', function () {
-          npStatus.innerHTML = '<span class="live-dot"></span> เล่นอยู่';
+          npStatus.textContent = 'เล่นอยู่';
           npStatus.className = 'status ok';
+          showOverlay();
         }, { once: true });
         video.addEventListener('error', function () {
           npStatus.textContent = 'เล่นช่องนี้ไม่ได้';
           npStatus.className = 'status error';
+          chInfoOverlay.classList.add('show');
         }, { once: true });
       }
       video.play().catch(function () {});
@@ -335,80 +340,83 @@
       video.play();
     });
 
-    var appEl = document.querySelector('.app');
+    var mainEl = document.querySelector('.main');
     var fsBtn = document.getElementById('fsBtn');
     fsBtn.addEventListener('click', function () {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
-        appEl.requestFullscreen();
+        document.querySelector('.app').requestFullscreen();
       }
     });
-    document.addEventListener('fullscreenchange', function () {
-      fsBtn.textContent = document.fullscreenElement ? '⛶ ออกจากเต็มจอ' : '⛶ เต็มจอ';
-    });
+
+    function updateClock() {
+      var d = new Date();
+      var h = d.getHours();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12; if (h12 === 0) h12 = 12;
+      var m = String(d.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = String(h12).padStart(2, '0') + ':' + m + ' ' + ampm;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
 
     function renderList() {
       var q = searchInput.value.trim().toLowerCase();
-      var filtered = allItems.filter(function (it) {
-        var matchGroup = activeGroup === 'ทั้งหมด' || it.group === activeGroup;
-        var matchQuery = !q || it.name.toLowerCase().indexOf(q) !== -1;
-        return matchGroup && matchQuery;
+      chListEl.innerHTML = '';
+      var lastGroup = null;
+      var shown = 0;
+
+      allItems.forEach(function (item, idx) {
+        if (q && item.name.toLowerCase().indexOf(q) === -1) return;
+        shown++;
+
+        if (item.group !== lastGroup) {
+          var header = document.createElement('div');
+          header.className = 'group-header';
+          header.textContent = item.group;
+          header.style.color = colorForGroup(item.group);
+          chListEl.appendChild(header);
+          lastGroup = item.group;
+        }
+
+        var row = document.createElement('div');
+        row.className = 'ch-row';
+        if (item.url === activeUrl) row.classList.add('active');
+
+        var num = document.createElement('div');
+        num.className = 'ch-num';
+        num.textContent = idx + 1;
+
+        var divider = document.createElement('div');
+        divider.className = 'ch-divider';
+
+        var name = document.createElement('div');
+        name.className = 'ch-name';
+        name.textContent = item.name;
+
+        var logoBox = document.createElement('div');
+        logoBox.className = 'ch-logo-box';
+        var img = document.createElement('img');
+        img.src = item.logo;
+        img.alt = item.name;
+        img.onerror = function () { logoBox.style.visibility = 'hidden'; };
+        logoBox.appendChild(img);
+
+        row.appendChild(num);
+        row.appendChild(divider);
+        row.appendChild(name);
+        row.appendChild(logoBox);
+        row.addEventListener('click', function () { loadChannel(item, row); });
+        chListEl.appendChild(row);
       });
 
-      chListEl.innerHTML = '';
-      if (!filtered.length) {
+      if (!shown) {
         var empty = document.createElement('div');
         empty.className = 'empty-msg';
         empty.textContent = 'ไม่พบช่องที่ค้นหา';
         chListEl.appendChild(empty);
-        return;
       }
-
-      filtered.forEach(function (item) {
-        var row = document.createElement('div');
-        row.className = 'ch-row';
-        if (item.url === activeUrl) row.classList.add('active');
-        var img = document.createElement('img');
-        img.src = item.logo;
-        img.alt = item.name;
-        img.onerror = function () { img.style.visibility = 'hidden'; };
-        var meta = document.createElement('div');
-        meta.className = 'ch-meta';
-        var name = document.createElement('div');
-        name.className = 'ch-name';
-        name.textContent = item.name;
-        var group = document.createElement('div');
-        group.className = 'ch-group';
-        group.textContent = item.group;
-        meta.appendChild(name);
-        meta.appendChild(group);
-        row.appendChild(img);
-        row.appendChild(meta);
-        row.addEventListener('click', function () { loadChannel(item, row); });
-        chListEl.appendChild(row);
-      });
-    }
-
-    function renderTabs() {
-      var groups = ['ทั้งหมด'];
-      allItems.forEach(function (it) {
-        if (groups.indexOf(it.group) === -1) groups.push(it.group);
-      });
-      tabsEl.innerHTML = '';
-      groups.forEach(function (g) {
-        var tab = document.createElement('button');
-        tab.className = 'tab' + (g === activeGroup ? ' active' : '');
-        tab.type = 'button';
-        tab.textContent = g;
-        tab.addEventListener('click', function () {
-          activeGroup = g;
-          document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
-          tab.classList.add('active');
-          renderList();
-        });
-        tabsEl.appendChild(tab);
-      });
     }
 
     searchInput.addEventListener('input', renderList);
@@ -417,8 +425,6 @@
       .then(function (r) { return r.text(); })
       .then(function (text) {
         allItems = parseM3U(text);
-        chCountEl.textContent = allItems.length + ' ช่อง';
-        renderTabs();
         renderList();
         if (allItems.length) {
           var firstRow = chListEl.querySelector('.ch-row');
@@ -428,6 +434,7 @@
       .catch(function () {
         npName.textContent = 'โหลดรายชื่อช่องไม่สำเร็จ';
         npStatus.textContent = '';
+        chInfoOverlay.classList.add('show');
       });
   </script>
 </body>
