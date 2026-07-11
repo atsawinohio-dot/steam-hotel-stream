@@ -42,8 +42,10 @@
       bottom: 0;
       width: 400px;
       max-width: 86vw;
-      background: #0b1626;
-      border-right: 1px solid #16263b;
+      background: rgba(10,20,32,0.45);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-right: 1px solid rgba(255,255,255,0.08);
       display: flex;
       flex-direction: column;
       z-index: 21;
@@ -66,8 +68,8 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: 1px solid #22354e;
-      background: #16263b;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
       color: #eef2f7;
       font-size: 1.1rem;
       cursor: pointer;
@@ -79,7 +81,8 @@
       gap: 10px;
       margin: 16px;
       padding: 10px 16px;
-      background: #16263b;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 999px;
     }
     .search-box input {
@@ -100,14 +103,6 @@
     }
     .ch-list::-webkit-scrollbar { width: 6px; }
     .ch-list::-webkit-scrollbar-thumb { background: #2a4160; border-radius: 3px; }
-
-    .group-header {
-      padding: 14px 20px 8px;
-      font-size: 0.9rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
 
     .ch-row {
       display: grid;
@@ -306,15 +301,6 @@
     var allItems = [];
     var activeUrl = null;
     var overlayTimer = null;
-    var groupColors = ['#ff4757', '#ffa502', '#2ed573', '#3498db', '#a55eea', '#ff6b81', '#17c0eb', '#f8c291'];
-    var groupColorMap = {};
-
-    function colorForGroup(g) {
-      if (!groupColorMap[g]) {
-        groupColorMap[g] = groupColors[Object.keys(groupColorMap).length % groupColors.length];
-      }
-      return groupColorMap[g];
-    }
 
     function parseM3U(text) {
       var lines = text.split(/\r?\n/);
@@ -448,21 +434,11 @@
     function renderList() {
       var q = searchInput.value.trim().toLowerCase();
       chListEl.innerHTML = '';
-      var lastGroup = null;
       var shown = 0;
 
       allItems.forEach(function (item, idx) {
         if (q && item.name.toLowerCase().indexOf(q) === -1) return;
         shown++;
-
-        if (item.group !== lastGroup) {
-          var header = document.createElement('div');
-          header.className = 'group-header';
-          header.textContent = item.group;
-          header.style.color = colorForGroup(item.group);
-          chListEl.appendChild(header);
-          lastGroup = item.group;
-        }
 
         var row = document.createElement('div');
         row.className = 'ch-row';
