@@ -643,6 +643,28 @@
       }, 3500);
     }
 
+    var preconnected = {};
+    function preconnectOrigin(url) {
+      try {
+        var origin = new URL(url).origin;
+        if (preconnected[origin]) return;
+        preconnected[origin] = true;
+        var l = document.createElement('link');
+        l.rel = 'preconnect';
+        l.href = origin;
+        l.crossOrigin = 'anonymous';
+        document.head.appendChild(l);
+      } catch (e) {}
+    }
+    function preconnectNeighbors(idx) {
+      var n = allItems.length;
+      if (!n) return;
+      [idx - 1, idx + 1].forEach(function (j) {
+        var k = (j + n) % n;
+        if (allItems[k]) preconnectOrigin(allItems[k].url);
+      });
+    }
+
     function loadChannel(item, rowEl) {
       document.querySelectorAll('.ch-row.active').forEach(function (el) { el.classList.remove('active'); });
       if (rowEl) rowEl.classList.add('active');
@@ -657,8 +679,17 @@
 
       if (hls) { hls.destroy(); hls = null; }
 
+      // Warm TCP+TLS for the channels the user is most likely to zap to next.
+      var curIdx = allItems.findIndex(function (it) { return it.url === item.url; });
+      if (curIdx !== -1) preconnectNeighbors(curIdx);
+
       if (Hls.isSupported()) {
         hls = new Hls({
+          startFragPrefetch: true,     // fetch first media fragment ASAP
+          testBandwidth: false,        // skip initial bandwidth probe delay
+          startLevel: 0,               // start at lowest bitrate -> fastest first frame (ABR climbs after)
+          maxBufferLength: 10,         // less to buffer before playback starts
+          maxMaxBufferLength: 60,
           manifestLoadingTimeOut: 8000,
           manifestLoadingMaxRetry: 2,
           fragLoadingTimeOut: 15000
