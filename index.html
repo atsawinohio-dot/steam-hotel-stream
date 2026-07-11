@@ -286,6 +286,33 @@
     }
     .fs-btn:hover { opacity: 1; }
 
+    .sound-prompt {
+      position: absolute;
+      left: 50%;
+      bottom: 90px;
+      transform: translateX(-50%);
+      background: rgba(8,14,24,0.85);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 7;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      border: 1px solid rgba(255,255,255,0.25);
+      white-space: nowrap;
+    }
+    .sound-prompt.show {
+      opacity: 1;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
     .ch-info-overlay {
       position: absolute;
       left: 28px;
@@ -343,6 +370,7 @@
       </div>
       <button class="menu-btn" id="menuBtn" type="button" title="รายการช่อง">☰</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
+      <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
       <div class="ch-info-overlay" id="chInfoOverlay">
         <img id="npLogo" src="" alt="">
         <div>
@@ -378,6 +406,35 @@
     var allItems = [];
     var activeUrl = null;
     var overlayTimer = null;
+    var soundPrompt = document.getElementById('soundPrompt');
+    var soundUnlocked = false;
+
+    function unlockSound() {
+      if (soundUnlocked) return;
+      soundUnlocked = true;
+      video.muted = false;
+      video.play().catch(function () {});
+      soundPrompt.classList.remove('show');
+    }
+
+    function tryAutoplayWithSound() {
+      video.muted = false;
+      var p = video.play();
+      if (p && p.catch) {
+        p.catch(function () {
+          video.muted = true;
+          video.play().catch(function () {});
+          if (!soundUnlocked) soundPrompt.classList.add('show');
+        });
+      } else {
+        soundUnlocked = true;
+      }
+    }
+
+    // Any interaction anywhere on the page permanently enables sound
+    ['click', 'touchstart', 'keydown'].forEach(function (evt) {
+      document.addEventListener(evt, unlockSound, { passive: true });
+    });
 
     function parseM3U(text) {
       var lines = text.split(/\r?\n/);
@@ -464,6 +521,13 @@
     video.addEventListener('ended', function () {
       video.currentTime = 0;
       video.play();
+    });
+
+    // First time the stream actually starts playing (muted, per autoplay policy),
+    // immediately try switching to unmuted in case the browser/kiosk allows it.
+    video.addEventListener('playing', function initialSoundAttempt() {
+      video.removeEventListener('playing', initialSoundAttempt);
+      tryAutoplayWithSound();
     });
 
     var mainEl = document.querySelector('.main');
