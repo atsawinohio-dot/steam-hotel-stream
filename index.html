@@ -286,6 +286,24 @@
     }
     .fs-btn:hover { opacity: 1; }
 
+    .sound-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 120px;
+      background: rgba(10,20,32,0.55);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 1.1rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: opacity 0.15s;
+      z-index: 5;
+    }
+    .sound-btn:hover { opacity: 1; }
+
     .sound-prompt {
       position: absolute;
       left: 50%;
@@ -349,7 +367,7 @@
 <body>
   <div class="app">
     <div class="main">
-      <video id="video" controls controlsList="nofullscreen" autoplay muted loop playsinline></video>
+      <video id="video" autoplay muted loop playsinline></video>
       <div class="ticker-bar">
         <div class="ticker-label">📢 ROYS HOTEL</div>
         <div class="ticker-viewport">
@@ -368,6 +386,7 @@
         </div>
         <div class="clock" id="clock"></div>
       </div>
+      <button class="sound-btn" id="soundBtn" type="button" title="เปิด/ปิดเสียง">🔊</button>
       <button class="menu-btn" id="menuBtn" type="button" title="รายการช่อง">☰</button>
       <button class="fs-btn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       <div class="sound-prompt" id="soundPrompt">🔊 แตะหน้าจอเพื่อเปิดเสียง</div>
@@ -435,6 +454,21 @@
     ['click', 'touchstart', 'keydown'].forEach(function (evt) {
       document.addEventListener(evt, unlockSound, { passive: true });
     });
+
+    var soundBtn = document.getElementById('soundBtn');
+    function updateSoundIcon() { soundBtn.textContent = video.muted ? '🔇' : '🔊'; }
+    soundBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      video.muted = !video.muted;
+      if (!video.muted) {
+        soundUnlocked = true;
+        video.play().catch(function () {});
+        soundPrompt.classList.remove('show');
+      }
+      updateSoundIcon();
+    });
+    video.addEventListener('volumechange', updateSoundIcon);
+    updateSoundIcon();
 
     function parseM3U(text) {
       var lines = text.split(/\r?\n/);
