@@ -580,10 +580,9 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { closeMenu(); return; }
-      var activeEl = document.activeElement;
-      var isTyping = sidebar.classList.contains('open') && activeEl &&
-        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
-      if (isTyping) return;
+      // Arrow keys always drive remote-style navigation, regardless of
+      // where keyboard focus happens to be (avoids getting permanently
+      // stuck if the hidden search input ever retains focus).
       if (e.key === 'ArrowUp') { e.preventDefault(); changeChannel(-1); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); changeChannel(1); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); openMenu(); }
