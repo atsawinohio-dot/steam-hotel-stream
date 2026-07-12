@@ -595,14 +595,14 @@
         top: 0; left: 0; bottom: 0;
         width: 400px;
         max-width: 86vw;
-        transform: translateX(-100%);
+        transform: translateX(-100%) !important;
         transition: transform 0.25s ease;
         box-shadow: 12px 0 40px rgba(0,0,0,0.5);
         border-left: none;
         border-right: 1px solid rgba(255,255,255,0.08);
         z-index: 21;
       }
-      .app.fs-collapsed .sidebar.open { transform: translateX(0); }
+      .app.fs-collapsed .sidebar.open { transform: translateX(0) !important; }
       .app.fs-collapsed .menu-backdrop { display: block !important; }
       .app.fs-collapsed .list-btn { display: inline-flex !important; }
       .app.fs-collapsed .close-btn { display: flex !important; }
