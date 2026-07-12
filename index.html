@@ -130,50 +130,23 @@
     .ch-list::-webkit-scrollbar-thumb { background: #2a4160; border-radius: 3px; }
 
     .ch-row {
-      display: grid;
-      grid-template-columns: 40px 1px 1fr 60px;
+      display: flex;
       align-items: center;
       gap: 16px;
-      padding: 12px 20px;
+      padding: 14px 20px;
       cursor: pointer;
       position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .ch-row:hover { background: #10203380; }
+    .ch-row:hover { background: rgba(255,255,255,0.05); }
     .ch-row.active {
-      background: #12707a;
-    }
-    .ch-row.active::before {
-      content: "▶";
-      position: absolute;
-      left: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.7rem;
-      color: #7fe8e0;
-    }
-    .ch-num {
-      font-size: 1.15rem;
-      font-weight: 300;
-      color: #7d90ab;
-      text-align: right;
-    }
-    .ch-row.active .ch-num { color: #d8fbf7; }
-    .ch-divider {
-      width: 1px;
-      height: 26px;
-      background: #22354e;
-    }
-    .ch-name {
-      font-size: 1rem;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      background: rgba(18,112,122,0.22);
     }
     .ch-logo-box {
-      width: 56px;
-      height: 36px;
-      border-radius: 6px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -181,9 +154,51 @@
       flex: none;
     }
     .ch-logo-box img {
-      max-width: 100%;
-      max-height: 100%;
+      max-width: 68%;
+      max-height: 68%;
       object-fit: contain;
+    }
+    .ch-info { flex: 1; min-width: 0; }
+    .ch-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ch-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .ch-num {
+      flex: none;
+      background: rgba(255,255,255,0.12);
+      color: #a9bad0;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .ch-row.active .ch-num { background: #12707a; color: #d8fbf7; }
+    .ch-cat {
+      font-size: 0.8rem;
+      color: #8296b0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ch-badge {
+      flex: none;
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
     }
     .empty-msg {
       padding: 30px 20px;
@@ -552,6 +567,26 @@
 
     @media (max-width: 860px) {
       .sidebar { width: 86vw; }
+    }
+
+    /* Persistent split layout on desktop / tablet landscape / TV: video left, channel list always visible on the right (no popup) */
+    @media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+      .app { display: flex; }
+      .main { position: relative; flex: 1; min-width: 0; }
+      .sidebar {
+        position: relative;
+        top: auto; left: auto; bottom: auto;
+        width: 420px;
+        max-width: 420px;
+        transform: none;
+        box-shadow: none;
+        border-right: none;
+        border-left: 1px solid rgba(255,255,255,0.08);
+        background: rgba(10,20,32,0.6);
+      }
+      .menu-backdrop { display: none !important; }
+      .list-btn { display: none !important; }
+      .close-btn { display: none !important; }
     }
   </style>
 </head>
@@ -983,20 +1018,10 @@
         if (q && item.name.toLowerCase().indexOf(q) === -1) return;
         shown++;
 
+        var isActive = item.url === activeUrl;
         var row = document.createElement('div');
         row.className = 'ch-row';
-        if (item.url === activeUrl) row.classList.add('active');
-
-        var num = document.createElement('div');
-        num.className = 'ch-num';
-        num.textContent = idx + 1;
-
-        var divider = document.createElement('div');
-        divider.className = 'ch-divider';
-
-        var name = document.createElement('div');
-        name.className = 'ch-name';
-        name.textContent = item.name;
+        if (isActive) row.classList.add('active');
 
         var logoBox = document.createElement('div');
         logoBox.className = 'ch-logo-box';
@@ -1006,10 +1031,39 @@
         img.onerror = function () { logoBox.style.visibility = 'hidden'; };
         logoBox.appendChild(img);
 
-        row.appendChild(num);
-        row.appendChild(divider);
-        row.appendChild(name);
+        var info = document.createElement('div');
+        info.className = 'ch-info';
+
+        var name = document.createElement('div');
+        name.className = 'ch-name';
+        name.textContent = item.name;
+
+        var meta = document.createElement('div');
+        meta.className = 'ch-meta';
+
+        var num = document.createElement('span');
+        num.className = 'ch-num';
+        num.textContent = idx + 1;
+
+        var cat = document.createElement('span');
+        cat.className = 'ch-cat';
+        cat.textContent = item.group || '';
+
+        meta.appendChild(num);
+        meta.appendChild(cat);
+        info.appendChild(name);
+        info.appendChild(meta);
+
         row.appendChild(logoBox);
+        row.appendChild(info);
+
+        if (isActive) {
+          var badge = document.createElement('div');
+          badge.className = 'ch-badge';
+          badge.textContent = 'กำลังรับชม';
+          row.appendChild(badge);
+        }
+
         row.addEventListener('click', function () { loadChannel(item, row); closeMenu(); });
         chListEl.appendChild(row);
       });
