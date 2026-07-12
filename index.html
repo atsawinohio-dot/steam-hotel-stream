@@ -63,20 +63,20 @@
     .sidebar {
       position: fixed;
       top: 0;
-      left: 0;
+      right: 0;
       bottom: 0;
       width: 400px;
       max-width: 86vw;
       background: rgba(10,20,32,0.45);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border-right: 1px solid rgba(255,255,255,0.08);
+      border-left: 1px solid rgba(255,255,255,0.08);
       display: flex;
       flex-direction: column;
       z-index: 21;
-      transform: translateX(-100%);
+      transform: translateX(100%);
       transition: transform 0.25s ease;
-      box-shadow: 12px 0 40px rgba(0,0,0,0.5);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.5);
     }
     .sidebar.open {
       transform: translateX(0);
@@ -575,7 +575,7 @@
       .main { position: relative; flex: 1; min-width: 0; }
       .sidebar {
         position: relative;
-        top: auto; left: auto; bottom: auto;
+        top: auto; left: auto; right: auto; bottom: auto;
         width: 420px;
         max-width: 420px;
         transform: none;
@@ -592,14 +592,14 @@
          it becomes a slide-in popup again (like mobile) instead of the persistent split view. */
       .app.fs-collapsed .sidebar {
         position: fixed !important;
-        top: 0; left: 0; bottom: 0;
+        top: 0; right: 0; bottom: 0;
         width: 400px;
         max-width: 86vw;
-        transform: translateX(-100%) !important;
+        transform: translateX(100%) !important;
         transition: transform 0.25s ease;
-        box-shadow: 12px 0 40px rgba(0,0,0,0.5);
-        border-left: none;
-        border-right: 1px solid rgba(255,255,255,0.08);
+        box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+        border-right: none;
+        border-left: 1px solid rgba(255,255,255,0.08);
         z-index: 21;
       }
       .app.fs-collapsed .sidebar.open { transform: translateX(0) !important; }
@@ -616,16 +616,16 @@
         <div class="onboarding-title">👋 วิธีใช้งานเบื้องต้น</div>
         <div id="onboardingRows">
           <div class="onboarding-row">
-            <div class="onboarding-key">⬅️</div>
-            <div class="onboarding-desc">กดซ้าย เปิดรายการช่องทั้งหมด</div>
+            <div class="onboarding-key">➡️</div>
+            <div class="onboarding-desc">กดขวา เปิดรายการช่องทั้งหมด</div>
           </div>
           <div class="onboarding-row">
             <div class="onboarding-key">⬆️⬇️</div>
             <div class="onboarding-desc">กดขึ้น/ลง เลือกและสลับช่อง</div>
           </div>
           <div class="onboarding-row">
-            <div class="onboarding-key">➡️</div>
-            <div class="onboarding-desc">กดขวา ปิดรายการช่อง</div>
+            <div class="onboarding-key">⬅️</div>
+            <div class="onboarding-desc">กดซ้าย ปิดรายการช่อง</div>
           </div>
           <div class="onboarding-row">
             <div class="onboarding-key">🔊</div>
@@ -991,8 +991,8 @@
       // stuck if the hidden search input ever retains focus).
       if (e.key === 'ArrowUp') { e.preventDefault(); changeChannel(-1); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); changeChannel(1); }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); openMenu(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); closeMenu(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); openMenu(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); closeMenu(); }
     });
 
     // ---- Touch / mobile support ----
@@ -1028,7 +1028,7 @@
       var adx = Math.abs(dx), ady = Math.abs(dy);
       if (Math.max(adx, ady) < 45) return; // treat as a tap, not a swipe
       if (adx > ady) {
-        if (dx > 0) openMenu(); else closeMenu();
+        if (dx < 0) openMenu(); else closeMenu(); // menu lives on the right: swipe left opens, right closes
       } else {
         if (dy < 0) changeChannel(1); else changeChannel(-1); // swipe up = next channel
       }
