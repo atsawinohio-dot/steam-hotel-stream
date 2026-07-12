@@ -587,6 +587,25 @@
       .menu-backdrop { display: none !important; }
       .list-btn { display: none !important; }
       .close-btn { display: none !important; }
+
+      /* Entering fullscreen collapses the channel list so the video gets the whole screen;
+         it becomes a slide-in popup again (like mobile) instead of the persistent split view. */
+      .app.fs-collapsed .sidebar {
+        position: fixed !important;
+        top: 0; left: 0; bottom: 0;
+        width: 400px;
+        max-width: 86vw;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        box-shadow: 12px 0 40px rgba(0,0,0,0.5);
+        border-left: none;
+        border-right: 1px solid rgba(255,255,255,0.08);
+        z-index: 21;
+      }
+      .app.fs-collapsed .sidebar.open { transform: translateX(0); }
+      .app.fs-collapsed .menu-backdrop { display: block !important; }
+      .app.fs-collapsed .list-btn { display: inline-flex !important; }
+      .app.fs-collapsed .close-btn { display: flex !important; }
     }
   </style>
 </head>
@@ -891,13 +910,18 @@
     });
 
     var mainEl = document.querySelector('.main');
+    var appEl = document.querySelector('.app');
     var fsBtn = document.getElementById('fsBtn');
     fsBtn.addEventListener('click', function () {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
-        document.querySelector('.app').requestFullscreen();
+        appEl.requestFullscreen();
       }
+    });
+    document.addEventListener('fullscreenchange', function () {
+      appEl.classList.toggle('fs-collapsed', !!document.fullscreenElement);
+      if (!document.fullscreenElement) closeMenu();
     });
 
     var sidebar = document.getElementById('sidebar');
