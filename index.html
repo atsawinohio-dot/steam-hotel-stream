@@ -26,7 +26,6 @@
   <link rel="dns-prefetch" href="//jmp2.uk">
   <link rel="dns-prefetch" href="//trace-sportstars-samsungnz.amagi.tv">
   <link rel="dns-prefetch" href="//1a3566cb46914c5499fbc86fbc4ac87e.mediatailor.us-west-2.amazonaws.com">
-  <link rel="dns-prefetch" href="//api.open-meteo.com">
   <link rel="dns-prefetch" href="//amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv">
   <style>
     :root {
@@ -69,23 +68,6 @@
     }
     video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
 
-    /* ---- Top info bar (hotel ticker + clock) ---- */
-    .topbar {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: calc(40px + env(safe-area-inset-top, 0px));
-      padding-top: env(safe-area-inset-top, 0px);
-      display: flex; align-items: stretch; z-index: 4; pointer-events: none;
-      background: linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0));
-    }
-    .tick-brand {
-      flex: none; display: flex; align-items: center; padding: 0 14px;
-      background: var(--teal-deep); color: #fff; font-weight: 800; font-size: 0.74rem; white-space: nowrap;
-    }
-    .tick-view { flex: 1; overflow: hidden; display: flex; align-items: center; }
-    .tick-track { display: flex; white-space: nowrap; animation: tick 28s linear infinite; }
-    .tick-track span { padding: 0 26px; font-size: 0.8rem; color: #f0f5fb; }
-    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .clock { flex: none; display: flex; align-items: center; padding: 0 14px; font-size: 0.84rem; font-weight: 700; color: #fff; white-space: nowrap; }
 
     /* ---- Change-channel button (top-right) ---- */
     .chg-btn {
@@ -252,25 +234,6 @@
     <div class="video-wrap" id="videoWrap">
       <video id="video" autoplay muted loop playsinline></video>
       <div class="spinner"></div>
-
-      <div class="topbar">
-        <div class="tick-brand">📢 ROYS HOTEL</div>
-        <div class="tick-view">
-          <div class="tick-track">
-            <span>🙏 ยินดีต้อนรับลูกค้าทุกท่าน</span>
-            <span>🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
-            <span>🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
-            <span>📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
-            <span class="weather-span">🌤️ Bangkok Weather: Loading...</span>
-            <span aria-hidden="true">🙏 ยินดีต้อนรับลูกค้าทุกท่าน</span>
-            <span aria-hidden="true">🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
-            <span aria-hidden="true">🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
-            <span aria-hidden="true">📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
-            <span class="weather-span" aria-hidden="true">🌤️ Bangkok Weather: Loading...</span>
-          </div>
-        </div>
-        <div class="clock" id="clock"></div>
-      </div>
 
       <button class="chg-btn" id="chgBtn" type="button"><span class="ic">≡</span> เปลี่ยนช่อง</button>
 
@@ -599,56 +562,6 @@
       else if (dx < 0) openOverlay();
       else closeOverlay();
     }, { passive: true });
-
-    /* ---- Clock ---- */
-    function updateClock() {
-      var d = new Date(), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12;
-      document.getElementById('clock').textContent = String(h12).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ap;
-    }
-    updateClock(); setInterval(updateClock, 1000);
-
-    /* ---- Live Bangkok weather (English) in the ticker ---- */
-    var WMO_TEXT = {
-      0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
-      45: 'Fog', 48: 'Fog',
-      51: 'Light Drizzle', 53: 'Drizzle', 55: 'Heavy Drizzle',
-      61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain',
-      66: 'Freezing Rain', 67: 'Freezing Rain',
-      71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
-      80: 'Light Showers', 81: 'Showers', 82: 'Heavy Showers',
-      85: 'Snow Showers', 86: 'Snow Showers',
-      95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm'
-    };
-    var WMO_ICON = {
-      0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-      45: '🌫️', 48: '🌫️',
-      51: '🌦️', 53: '🌦️', 55: '🌦️',
-      61: '🌧️', 63: '🌧️', 65: '🌧️',
-      66: '🌧️', 67: '🌧️',
-      71: '🌨️', 73: '🌨️', 75: '🌨️', 77: '🌨️',
-      80: '🌦️', 81: '🌧️', 82: '🌧️',
-      85: '🌨️', 86: '🌨️',
-      95: '⛈️', 96: '⛈️', 99: '⛈️'
-    };
-    function updateWeather() {
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7563&longitude=100.5018&current=temperature_2m,weather_code&timezone=Asia%2FBangkok')
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var c = data.current;
-          if (!c) return;
-          var code = c.weather_code;
-          var icon = WMO_ICON[code] || '🌤️';
-          var text = WMO_TEXT[code] || 'N/A';
-          var temp = Math.round(c.temperature_2m);
-          var msg = icon + ' Bangkok Weather: ' + temp + '°C, ' + text;
-          document.querySelectorAll('.weather-span').forEach(function (el) { el.textContent = msg; });
-        })
-        .catch(function () {
-          document.querySelectorAll('.weather-span').forEach(function (el) { el.textContent = '🌤️ Bangkok Weather: unavailable'; });
-        });
-    }
-    updateWeather();
-    setInterval(updateWeather, 30 * 60 * 1000); // refresh every 30 minutes
 
     /* ---- Render channel list ---- */
     function renderList() {
