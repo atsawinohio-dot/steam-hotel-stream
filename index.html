@@ -808,8 +808,20 @@
     }
 
     function loadChannel(item, rowEl) {
-      document.querySelectorAll('.ch-row.active').forEach(function (el) { el.classList.remove('active'); });
-      if (rowEl) rowEl.classList.add('active');
+      document.querySelectorAll('.ch-row.active').forEach(function (el) {
+        el.classList.remove('active');
+        var oldBadge = el.querySelector('.ch-badge');
+        if (oldBadge) oldBadge.remove();
+      });
+      if (rowEl) {
+        rowEl.classList.add('active');
+        if (!rowEl.querySelector('.ch-badge')) {
+          var badge = document.createElement('div');
+          badge.className = 'ch-badge';
+          badge.textContent = 'กำลังรับชม';
+          rowEl.appendChild(badge);
+        }
+      }
       activeUrl = item.url;
 
       npLogo.src = item.logo;
