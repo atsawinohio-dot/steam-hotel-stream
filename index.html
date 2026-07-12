@@ -182,11 +182,35 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
     .empty { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 0.9rem; }
     .install { display: none; margin: 10px 14px calc(14px + env(safe-area-inset-bottom,0px)); align-items: center; justify-content: center; gap: 8px; background: var(--teal-deep); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+    /* ---- Category filter chips ---- */
+    .chips { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 2px 14px 12px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: none; white-space: nowrap; cursor: pointer;
+      padding: 7px 15px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: var(--muted);
+    }
+    .chip.active { background: var(--teal); border-color: var(--teal); color: #04231f; }
+
+    /* ---- Favorite star ---- */
+    .star { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #55677e; cursor: pointer; }
+    .star.on { color: #ffcb45; }
+
+    /* ---- Loading spinner ---- */
+    .spinner {
+      position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+      border: 4px solid rgba(255,255,255,0.25); border-top-color: #fff; border-radius: 50%;
+      z-index: 3; display: none; animation: spin 0.8s linear infinite;
+    }
+    .player.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <section class="player" id="player">
     <video id="video" autoplay muted loop playsinline></video>
+    <div class="spinner"></div>
 
     <div class="topbar">
       <div class="tick-brand">📢 ROYS HOTEL</div>
@@ -231,6 +255,7 @@
         </div>
         <button class="ov-close" id="ovClose" type="button">✕</button>
       </div>
+      <div class="chips" id="chips"></div>
       <div class="list" id="list"></div>
       <button class="install" id="installBtn" type="button">⬇️ ติดตั้งเป็นแอป</button>
     </aside>
@@ -249,6 +274,12 @@
     var overlay = document.getElementById('overlay');
     var ovBackdrop = document.getElementById('ovBackdrop');
     var hls = null, allItems = [], activeUrl = null, npTimer = null;
+    var chipsEl = document.getElementById('chips');
+    var currentFilter = 'all';
+    var favs = {};
+    try { favs = JSON.parse(localStorage.getItem('roys_favs') || '{}') || {}; } catch (e) { favs = {}; }
+    function saveFavs() { try { localStorage.setItem('roys_favs', JSON.stringify(favs)); } catch (e) {} }
+    function toggleFav(url) { if (favs[url]) delete favs[url]; else favs[url] = 1; saveFavs(); }
 
     /* ---- Overlay open/close ---- */
     function openOverlay() {
@@ -373,6 +404,7 @@
     function loadChannel(item) {
       activeUrl = item.url;
       markActive();
+      player.classList.add('loading');
       npLogo.src = item.logo; npLogo.style.display = item.logo ? '' : 'none';
       npName.textContent = item.name; npStatus.textContent = 'กำลังเชื่อมต่อ…'; npStatus.className = 'np-status'; showNP();
 
@@ -382,18 +414,19 @@
 
       if (window.Hls && Hls.isSupported()) {
         hls = new Hls({ startFragPrefetch: true, testBandwidth: false, startLevel: 0, maxBufferLength: 10, maxMaxBufferLength: 60, manifestLoadingTimeOut: 8000, manifestLoadingMaxRetry: 2, fragLoadingTimeOut: 15000 });
-        hls.on(Hls.Events.MANIFEST_PARSED, function () { npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); });
-        hls.on(Hls.Events.ERROR, function (evt, data) { if (data.fatal) { npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); } });
+        hls.on(Hls.Events.MANIFEST_PARSED, function () { player.classList.remove('loading'); npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); });
+        hls.on(Hls.Events.ERROR, function (evt, data) { if (data.fatal) { player.classList.remove('loading'); npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); } });
         hls.loadSource(item.url); hls.attachMedia(video);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = item.url;
-        video.addEventListener('loadedmetadata', function () { npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); }, { once: true });
-        video.addEventListener('error', function () { npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); }, { once: true });
+        video.addEventListener('loadedmetadata', function () { player.classList.remove('loading'); npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); }, { once: true });
+        video.addEventListener('error', function () { player.classList.remove('loading'); npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); }, { once: true });
       }
       video.play().catch(function () {});
     }
 
     video.addEventListener('ended', function () { video.currentTime = 0; video.play(); });
+    video.addEventListener('playing', function () { player.classList.remove('loading'); });
     video.addEventListener('playing', function once() { video.removeEventListener('playing', once); tryAutoplayWithSound(); });
 
     /* ---- Channel up/down (TV remote + swipe) ---- */
@@ -442,6 +475,8 @@
       listEl.innerHTML = ''; var shown = 0;
       allItems.forEach(function (item, idx) {
         if (q && item.name.toLowerCase().indexOf(q) === -1) return;
+        if (currentFilter === 'fav' && !favs[item.url]) return;
+        else if (currentFilter !== 'all' && currentFilter !== 'fav' && item.group !== currentFilter) return;
         shown++;
         var isActive = item.url === activeUrl;
         var row = document.createElement('div'); row.className = 'row' + (isActive ? ' active' : ''); row.dataset.url = item.url;
@@ -455,16 +490,52 @@
         mt.appendChild(nu); mt.appendChild(ct); info.appendChild(nm); info.appendChild(mt);
         row.appendChild(logo); row.appendChild(info);
         if (isActive) { var live = document.createElement('div'); live.className = 'live'; live.innerHTML = '<span class="lg"></span>LIVE'; row.appendChild(live); }
+        var star = document.createElement('div');
+        star.className = 'star' + (favs[item.url] ? ' on' : '');
+        star.textContent = favs[item.url] ? '★' : '☆';
+        star.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleFav(item.url);
+          star.classList.toggle('on'); star.textContent = favs[item.url] ? '★' : '☆';
+          if (currentFilter === 'fav' && !favs[item.url]) row.remove();
+        });
+        row.appendChild(star);
         row.addEventListener('click', function () { loadChannel(item); closeOverlay(); });
         listEl.appendChild(row);
       });
-      if (!shown) { var em = document.createElement('div'); em.className = 'empty'; em.textContent = 'ไม่พบช่องที่ค้นหา'; listEl.appendChild(em); }
+      if (!shown) {
+        var em = document.createElement('div'); em.className = 'empty';
+        em.textContent = currentFilter === 'fav' ? 'ยังไม่มีช่องโปรด — กด ☆ เพื่อเพิ่ม' : 'ไม่พบช่องที่ค้นหา';
+        listEl.appendChild(em);
+      }
     }
     searchInput.addEventListener('input', renderList);
+
+    function renderChips() {
+      var groups = [];
+      allItems.forEach(function (it) { if (it.group && groups.indexOf(it.group) === -1) groups.push(it.group); });
+      var defs = [{ id: 'all', label: 'ทั้งหมด' }, { id: 'fav', label: '★ โปรด' }];
+      groups.forEach(function (g) { defs.push({ id: g, label: g }); });
+      chipsEl.innerHTML = '';
+      defs.forEach(function (d) {
+        var c = document.createElement('div');
+        c.className = 'chip' + (currentFilter === d.id ? ' active' : '');
+        c.textContent = d.label;
+        c.addEventListener('click', function () {
+          currentFilter = d.id;
+          chipsEl.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('active'); });
+          c.classList.add('active');
+          renderList();
+          listEl.scrollTop = 0;
+        });
+        chipsEl.appendChild(c);
+      });
+    }
 
     /* ---- Boot ---- */
     fetch('iptv.m3u8').then(function (r) { return r.text(); }).then(function (text) {
       allItems = parseM3U(text);
+      renderChips();
       renderList();
       if (allItems.length) loadChannel(allItems[0]);
     }).catch(function () { npName.textContent = 'โหลดรายชื่อช่องไม่สำเร็จ'; npStatus.textContent = ''; showNP(true); });
