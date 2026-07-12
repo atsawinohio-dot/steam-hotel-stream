@@ -367,8 +367,22 @@
       // that hands the whole screen to Apple's native player chrome and hides
       // our channel-picker UI entirely (no way to change channel). CSS
       // pseudo-fullscreen keeps our own controls intact on every device.
-      if (player.requestFullscreen) { var p = player.requestFullscreen(); if (p && p.catch) p.catch(pseudoOn); return; }
-      if (player.webkitRequestFullscreen) { player.webkitRequestFullscreen(); return; }
+      //
+      // Also: iOS Safari has `Element.requestFullscreen` as a *property* that
+      // exists but silently does nothing when called on a non-<video>
+      // element - it never rejects, so a plain `if (player.requestFullscreen)`
+      // check passes and the button ends up doing nothing at all. Gate on
+      // `document.fullscreenEnabled` (reliably false on iOS Safari) instead
+      // of just checking the function reference exists.
+      if (document.fullscreenEnabled && player.requestFullscreen) {
+        var p = player.requestFullscreen();
+        if (p && p.catch) p.catch(pseudoOn); else if (!p) pseudoOn();
+        return;
+      }
+      if (document.webkitFullscreenEnabled && player.webkitRequestFullscreen) {
+        player.webkitRequestFullscreen();
+        return;
+      }
       pseudoOn();
     }
     function exitFullscreen() {
