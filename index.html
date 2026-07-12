@@ -607,7 +607,43 @@
       .app.fs-collapsed .list-btn { display: inline-flex !important; }
       .app.fs-collapsed .close-btn { display: flex !important; }
     }
-  </style>
+
+    /* ---- Phones / narrow screens: stacked layout (video on top, channel list below, both always visible) ---- */
+    @media (max-width: 899px), (max-aspect-ratio: 1/1) {
+      .app {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      .main {
+        position: relative !important;
+        inset: auto !important;
+        flex: none !important;
+        width: 100% !important;
+        aspect-ratio: 16 / 9;
+        max-height: 62dvh;
+        height: auto !important;
+      }
+      .sidebar {
+        position: static !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        border: none !important;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+        box-shadow: none !important;
+        background: #0a1420 !important;
+        z-index: auto !important;
+      }
+      .sidebar-head { padding: 12px 12px 4px; }
+      .menu-backdrop { display: none !important; }
+      .list-btn { display: none !important; }
+      .close-btn { display: none !important; }
+      .ch-nav { display: none !important; }
+      /* keep sound + fullscreen controls over the video */
+      .sound-btn, .fs-btn { bottom: 14px !important; }
+    }
 </head>
 <body>
   <div class="app">
