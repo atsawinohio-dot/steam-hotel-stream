@@ -284,9 +284,20 @@
       }
     }
 
-    /* Fullscreen: player element fills screen; hide everything else */
+    /* Native fullscreen: player element fills screen */
     .player:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; }
     .player:fullscreen video { object-fit: contain; }
+    .player:-webkit-full-screen { width: 100vw; height: 100vh; }
+
+    /* CSS pseudo-fullscreen fallback (works on every device, incl. iOS Safari) */
+    .player.pseudo-fs {
+      position: fixed;
+      inset: 0;
+      width: 100vw; width: 100dvw;
+      height: 100vh; height: 100dvh;
+      aspect-ratio: auto;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
@@ -414,11 +425,43 @@
 
     /* ---------- Fullscreen (player only) ---------- */
     var player = document.getElementById('player');
-    document.getElementById('fsBtn').addEventListener('click', function () {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else if (player.requestFullscreen) player.requestFullscreen();
-      else if (player.webkitRequestFullscreen) player.webkitRequestFullscreen();
-      else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); /* iOS Safari */
+    var fsBtn = document.getElementById('fsBtn');
+
+    function nativeFsElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+    function pseudoOn() { player.classList.add('pseudo-fs'); fsBtn.textContent = '✕'; }
+    function pseudoOff() { player.classList.remove('pseudo-fs'); fsBtn.textContent = '⛶'; }
+
+    function enterFullscreen() {
+      // 1) standard / webkit element fullscreen (desktop, Android Chrome, etc.)
+      if (player.requestFullscreen) {
+        var p = player.requestFullscreen();
+        if (p && p.catch) p.catch(pseudoOn);        // if the browser refuses, fall back
+        return;
+      }
+      if (player.webkitRequestFullscreen) { player.webkitRequestFullscreen(); return; }
+      // 2) iOS Safari: only the <video> can go fullscreen (native player)
+      if (video.webkitEnterFullscreen) { try { video.webkitEnterFullscreen(); return; } catch (e) {} }
+      // 3) last resort that works everywhere: CSS pseudo-fullscreen
+      pseudoOn();
+    }
+    function exitFullscreen() {
+      if (document.exitFullscreen) { document.exitFullscreen().catch(function () {}); }
+      else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+      pseudoOff();
+    }
+
+    fsBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (nativeFsElement() || player.classList.contains('pseudo-fs')) exitFullscreen();
+      else enterFullscreen();
+    });
+    // keep the icon in sync when the user exits native fullscreen via Esc / gesture
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+      document.addEventListener(ev, function () {
+        fsBtn.textContent = nativeFsElement() ? '✕' : '⛶';
+      });
     });
 
     /* ---------- Parse M3U ---------- */
