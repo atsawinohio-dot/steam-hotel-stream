@@ -52,6 +52,7 @@
       background: #000;
       overflow: hidden;
     }
+    .video-wrap { position: absolute; inset: 0; }
     video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
 
     /* ---- Top info bar (hotel ticker + clock) ---- */
@@ -211,48 +212,69 @@
     }
     .player.loading .spinner { display: block; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Wide screens / landscape tablets / desktop / TV: channel list is a
+       permanent side panel, not a popup. Phones stay popup-only (below). ===== */
+    @media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+      .player { display: flex; }
+      .video-wrap { position: relative; inset: auto; flex: 1; min-width: 0; height: 100%; }
+      .ov-backdrop { display: none !important; }
+      .chg-btn { display: none !important; }
+      .ov-close { display: none !important; }
+      .overlay {
+        position: relative;
+        top: auto; right: auto; bottom: auto;
+        flex: none;
+        width: min(400px, 34vw);
+        transform: none !important;
+        background: #0d141d;
+        border-left: 1px solid rgba(255,255,255,0.08);
+      }
+    }
   </style>
 </head>
 <body>
   <section class="player" id="player">
-    <video id="video" autoplay muted loop playsinline></video>
-    <div class="spinner"></div>
+    <div class="video-wrap" id="videoWrap">
+      <video id="video" autoplay muted loop playsinline></video>
+      <div class="spinner"></div>
 
-    <div class="topbar">
-      <div class="tick-brand">📢 ROYS HOTEL</div>
-      <div class="tick-view">
-        <div class="tick-track">
-          <span>🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
-          <span>🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
-          <span>📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
-          <span aria-hidden="true">🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
-          <span aria-hidden="true">🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
-          <span aria-hidden="true">📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
+      <div class="topbar">
+        <div class="tick-brand">📢 ROYS HOTEL</div>
+        <div class="tick-view">
+          <div class="tick-track">
+            <span>🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
+            <span>🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
+            <span>📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
+            <span aria-hidden="true">🍳 อาหารเช้า: 06:30-10:00 น. ณ ห้องอาหาร EMBER</span>
+            <span aria-hidden="true">🎉 โปรโมชั่น: จองต่อ 2 คืน รับส่วนลด 15%</span>
+            <span aria-hidden="true">📞 ติดต่อฟรอนต์: กด 0 จากโทรศัพท์ในห้อง</span>
+          </div>
+        </div>
+        <div class="clock" id="clock"></div>
+      </div>
+
+      <button class="chg-btn" id="chgBtn" type="button"><span class="ic">≡</span> เปลี่ยนช่อง</button>
+
+      <div class="np" id="np">
+        <img id="npLogo" src="" alt="">
+        <div>
+          <div class="np-name" id="npName">กำลังโหลด…</div>
+          <div class="np-status" id="npStatus"></div>
+          <button class="retry-btn" id="retryBtn" type="button">ลองใหม่</button>
         </div>
       </div>
-      <div class="clock" id="clock"></div>
-    </div>
 
-    <button class="chg-btn" id="chgBtn" type="button"><span class="ic">≡</span> เปลี่ยนช่อง</button>
+      <div class="vol-pop" id="volPop"><input type="range" id="volSlider" min="0" max="100" value="100"></div>
+      <div class="sound-prompt" id="soundPrompt">🔊 แตะเพื่อเปิดเสียง</div>
 
-    <div class="np" id="np">
-      <img id="npLogo" src="" alt="">
-      <div>
-        <div class="np-name" id="npName">กำลังโหลด…</div>
-        <div class="np-status" id="npStatus"></div>
-        <button class="retry-btn" id="retryBtn" type="button">ลองใหม่</button>
+      <div class="pbtns">
+        <button class="pbtn" id="soundBtn" type="button" title="เสียง">🔊</button>
+        <button class="pbtn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
       </div>
     </div>
 
-    <div class="vol-pop" id="volPop"><input type="range" id="volSlider" min="0" max="100" value="100"></div>
-    <div class="sound-prompt" id="soundPrompt">🔊 แตะเพื่อเปิดเสียง</div>
-
-    <div class="pbtns">
-      <button class="pbtn" id="soundBtn" type="button" title="เสียง">🔊</button>
-      <button class="pbtn" id="fsBtn" type="button" title="เต็มจอ">⛶</button>
-    </div>
-
-    <!-- Channel picker popup -->
+    <!-- Channel picker: popup on phones, permanent side panel on wide/landscape screens -->
     <div class="ov-backdrop" id="ovBackdrop"></div>
     <aside class="overlay" id="overlay">
       <div class="ov-head">
