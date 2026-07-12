@@ -53,6 +53,19 @@
       overflow: hidden;
     }
     .video-wrap { position: absolute; inset: 0; }
+    /* Native fullscreen on the video area only (never the channel-list panel) */
+    .video-wrap:fullscreen, .video-wrap:-webkit-full-screen {
+      position: fixed; inset: 0; width: 100vw; height: 100vh; background: #000;
+    }
+    /* CSS fallback fullscreen for browsers where requestFullscreen is a no-op (iOS Safari) */
+    .video-wrap.pseudo-fs {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw; width: 100dvw;
+      height: 100vh; height: 100dvh;
+      z-index: 9999;
+      background: #000;
+    }
     video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
 
     /* ---- Top info bar (hotel ticker + clock) ---- */
@@ -294,6 +307,7 @@
   <script>
     var video = document.getElementById('video');
     var player = document.getElementById('player');
+    var videoWrap = document.getElementById('videoWrap');
     var npEl = document.getElementById('np');
     var npLogo = document.getElementById('npLogo');
     var npName = document.getElementById('npName');
@@ -379,11 +393,14 @@
     video.addEventListener('volumechange', updateSoundIcon);
     updateSoundIcon();
 
-    /* ---- Robust fullscreen (native -> iOS video -> CSS pseudo) ---- */
+    /* ---- Robust fullscreen (native -> iOS video -> CSS pseudo) ----
+       Fullscreens `videoWrap` only, never `player` - `player` also contains
+       the permanent channel-list side panel on wide screens, and requesting
+       fullscreen on it would fullscreen the sidebar along with the video. */
     var fsBtn = document.getElementById('fsBtn');
     function nativeFsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
-    function pseudoOn() { player.classList.add('pseudo-fs'); fsBtn.textContent = '✕'; }
-    function pseudoOff() { player.classList.remove('pseudo-fs'); fsBtn.textContent = '⛶'; }
+    function pseudoOn() { videoWrap.classList.add('pseudo-fs'); fsBtn.textContent = '✕'; }
+    function pseudoOff() { videoWrap.classList.remove('pseudo-fs'); fsBtn.textContent = '⛶'; }
     function enterFullscreen() {
       // NOTE: we deliberately do NOT use video.webkitEnterFullscreen() on iOS -
       // that hands the whole screen to Apple's native player chrome and hides
@@ -392,17 +409,17 @@
       //
       // Also: iOS Safari has `Element.requestFullscreen` as a *property* that
       // exists but silently does nothing when called on a non-<video>
-      // element - it never rejects, so a plain `if (player.requestFullscreen)`
+      // element - it never rejects, so a plain `if (videoWrap.requestFullscreen)`
       // check passes and the button ends up doing nothing at all. Gate on
       // `document.fullscreenEnabled` (reliably false on iOS Safari) instead
       // of just checking the function reference exists.
-      if (document.fullscreenEnabled && player.requestFullscreen) {
-        var p = player.requestFullscreen();
+      if (document.fullscreenEnabled && videoWrap.requestFullscreen) {
+        var p = videoWrap.requestFullscreen();
         if (p && p.catch) p.catch(pseudoOn); else if (!p) pseudoOn();
         return;
       }
-      if (document.webkitFullscreenEnabled && player.webkitRequestFullscreen) {
-        player.webkitRequestFullscreen();
+      if (document.webkitFullscreenEnabled && videoWrap.webkitRequestFullscreen) {
+        videoWrap.webkitRequestFullscreen();
         return;
       }
       pseudoOn();
@@ -414,7 +431,7 @@
     }
     fsBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (nativeFsElement() || player.classList.contains('pseudo-fs')) exitFullscreen(); else enterFullscreen();
+      if (nativeFsElement() || videoWrap.classList.contains('pseudo-fs')) exitFullscreen(); else enterFullscreen();
     });
     ['fullscreenchange','webkitfullscreenchange'].forEach(function (ev) {
       document.addEventListener(ev, function () { fsBtn.textContent = nativeFsElement() ? '✕' : '⛶'; });
