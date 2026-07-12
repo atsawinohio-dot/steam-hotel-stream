@@ -291,7 +291,15 @@
     function toggleFav(url) { if (favs[url]) delete favs[url]; else favs[url] = 1; saveFavs(); }
 
     /* ---- Overlay open/close ---- */
+    // Guard against a tap that opens the panel also being seen (via bubbling /
+    // the backdrop underneath) as an immediate "tap outside to close" on the
+    // very same gesture - that double-fire looked like the panel "bouncing"
+    // open then shut. Only the open->immediate-close case is guarded; closing
+    // later (picking a channel, tapping X) always works normally.
+    var ovLastOpenAt = 0;
     function openOverlay() {
+      if (overlay.classList.contains('open')) return;
+      ovLastOpenAt = Date.now();
       renderList();
       overlay.classList.add('open');
       ovBackdrop.classList.add('open');
@@ -299,6 +307,8 @@
       if (act) act.scrollIntoView({ block: 'center' });
     }
     function closeOverlay() {
+      if (!overlay.classList.contains('open')) return;
+      if (Date.now() - ovLastOpenAt < 250) return; // swallow the accidental same-gesture close
       overlay.classList.remove('open');
       ovBackdrop.classList.remove('open');
       searchInput.blur();
