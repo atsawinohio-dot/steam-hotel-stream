@@ -8,6 +8,15 @@ A single-page IPTV web app for ROYS Hotel: fullscreen live-TV player with a slid
 
 Live site: https://atsawinohio-dot.github.io/steam-hotel-stream/
 
+## Multi-agent handoff protocol
+
+This project gets worked on by more than one AI tool (Claude Code, ChatGPT Codex, Antigravity IDE), sometimes in the same day, never in the same session. To avoid re-deriving context every time:
+
+1. **At the start of a session, read `HANDOFF.md` first** (before this file, even) — it says whether work is mid-flight and what the very next step is.
+2. **Before you stop** — whether the task is done, or you're approaching your context/usage limit and need to end the session — **update `HANDOFF.md`** using the template at the bottom of that file. A few sentences is enough: what you just finished, what's half-done, what the next agent should do first. Assume the next reader remembers nothing from this conversation.
+3. If you're stopping mid-edit (uncommitted changes, a file in a broken intermediate state), say so explicitly — don't leave the next agent to discover it by accident. Prefer committing working increments over leaving big uncommitted diffs.
+4. Don't treat another agent's unfinished work as wrong just because it's unfamiliar — check `HANDOFF.md` and recent `git log` before changing direction.
+
 ## Repo layout
 
 ```
