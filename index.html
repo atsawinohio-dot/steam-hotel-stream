@@ -102,6 +102,12 @@
     .np-status { font-size: 0.75rem; color: var(--muted); }
     .np-status.ok { color: var(--teal); }
     .np-status.err { color: #ff6b6b; }
+    .retry-btn {
+      display: none; margin-top: 6px; padding: 5px 10px; border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 999px; background: rgba(255,255,255,0.12); color: #fff; cursor: pointer;
+      font: inherit; font-size: 0.75rem; font-weight: 700; pointer-events: auto;
+    }
+    .retry-btn.show { display: inline-block; }
 
     /* ---- Bottom-right controls ---- */
     .pbtns {
@@ -234,6 +240,7 @@
       <div>
         <div class="np-name" id="npName">กำลังโหลด…</div>
         <div class="np-status" id="npStatus"></div>
+        <button class="retry-btn" id="retryBtn" type="button">ลองใหม่</button>
       </div>
     </div>
 
@@ -269,11 +276,13 @@
     var npLogo = document.getElementById('npLogo');
     var npName = document.getElementById('npName');
     var npStatus = document.getElementById('npStatus');
+    var retryBtn = document.getElementById('retryBtn');
     var listEl = document.getElementById('list');
     var searchInput = document.getElementById('searchInput');
     var overlay = document.getElementById('overlay');
     var ovBackdrop = document.getElementById('ovBackdrop');
-    var hls = null, allItems = [], activeUrl = null, npTimer = null;
+    var hls = null, allItems = [], activeUrl = null, npTimer = null, activeItem = null;
+    var loadSession = 0, recoveryAttempts = 0, maxRecoveryAttempts = 2, nativeHandlers = null;
     var chipsEl = document.getElementById('chips');
     var currentFilter = 'all';
     var favs = {};
@@ -344,9 +353,12 @@
     function pseudoOn() { player.classList.add('pseudo-fs'); fsBtn.textContent = '✕'; }
     function pseudoOff() { player.classList.remove('pseudo-fs'); fsBtn.textContent = '⛶'; }
     function enterFullscreen() {
+      // NOTE: we deliberately do NOT use video.webkitEnterFullscreen() on iOS -
+      // that hands the whole screen to Apple's native player chrome and hides
+      // our channel-picker UI entirely (no way to change channel). CSS
+      // pseudo-fullscreen keeps our own controls intact on every device.
       if (player.requestFullscreen) { var p = player.requestFullscreen(); if (p && p.catch) p.catch(pseudoOn); return; }
       if (player.webkitRequestFullscreen) { player.webkitRequestFullscreen(); return; }
-      if (video.webkitEnterFullscreen) { try { video.webkitEnterFullscreen(); return; } catch (e) {} }
       pseudoOn();
     }
     function exitFullscreen() {
@@ -400,30 +412,88 @@
       });
     }
 
-    /* ---- Load a channel ---- */
-    function loadChannel(item) {
-      activeUrl = item.url;
-      markActive();
-      player.classList.add('loading');
-      npLogo.src = item.logo; npLogo.style.display = item.logo ? '' : 'none';
-      npName.textContent = item.name; npStatus.textContent = 'กำลังเชื่อมต่อ…'; npStatus.className = 'np-status'; showNP();
-
+    /* ---- Load a channel (session-safe with bounded recovery) ---- */
+    function isCurrent(session) { return session === loadSession; }
+    function setStatus(session, text, state, persist) {
+      if (!isCurrent(session)) return;
+      npStatus.textContent = text; npStatus.className = 'np-status' + (state ? ' ' + state : '');
+      retryBtn.classList.toggle('show', state === 'err');
+      if (state === 'err') player.classList.remove('loading');
+      showNP(persist || state === 'err');
+    }
+    function clearNativeHandlers() {
+      if (!nativeHandlers) return;
+      video.removeEventListener('loadedmetadata', nativeHandlers.loadedmetadata);
+      video.removeEventListener('error', nativeHandlers.error);
+      nativeHandlers = null;
+    }
+    function disposePlayback() {
+      clearNativeHandlers();
       if (hls) { hls.destroy(); hls = null; }
+      video.removeAttribute('src');
+      try { video.load(); } catch (e) {}
+    }
+    function failChannel(session) {
+      if (!isCurrent(session)) return;
+      setStatus(session, 'เล่นช่องนี้ไม่ได้ โปรดลองใหม่', 'err', true);
+    }
+    function recoverHls(session, data) {
+      if (!isCurrent(session)) return;
+      if (recoveryAttempts >= maxRecoveryAttempts) { failChannel(session); return; }
+      recoveryAttempts++;
+      setStatus(session, 'กำลังเชื่อมต่อใหม่ (' + recoveryAttempts + '/' + maxRecoveryAttempts + ')…', '', true);
+      if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        hls.recoverMediaError();
+      } else {
+        hls.startLoad();
+      }
+    }
+    function loadChannel(item) {
+      var session = ++loadSession;
+      activeItem = item; activeUrl = item.url; recoveryAttempts = 0;
+      markActive(); player.classList.add('loading'); retryBtn.classList.remove('show');
+      npLogo.src = item.logo; npLogo.style.display = item.logo ? '' : 'none';
+      npName.textContent = item.name;
+      setStatus(session, 'กำลังเชื่อมต่อ…', '', true);
+      disposePlayback();
       var curIdx = allItems.findIndex(function (it) { return it.url === item.url; });
       if (curIdx !== -1) preconnectNeighbors(curIdx);
 
       if (window.Hls && Hls.isSupported()) {
         hls = new Hls({ startFragPrefetch: true, testBandwidth: false, startLevel: 0, maxBufferLength: 10, maxMaxBufferLength: 60, manifestLoadingTimeOut: 8000, manifestLoadingMaxRetry: 2, fragLoadingTimeOut: 15000 });
-        hls.on(Hls.Events.MANIFEST_PARSED, function () { player.classList.remove('loading'); npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); });
-        hls.on(Hls.Events.ERROR, function (evt, data) { if (data.fatal) { player.classList.remove('loading'); npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); } });
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          if (!isCurrent(session)) return;
+          recoveryAttempts = 0; player.classList.remove('loading'); setStatus(session, 'กำลังรับชม', 'ok');
+          video.play().catch(function () {});
+        });
+        hls.on(Hls.Events.ERROR, function (evt, data) {
+          if (!isCurrent(session) || !data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR || data.type === Hls.ErrorTypes.MEDIA_ERROR) recoverHls(session, data);
+          else failChannel(session);
+        });
         hls.loadSource(item.url); hls.attachMedia(video);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = item.url;
-        video.addEventListener('loadedmetadata', function () { player.classList.remove('loading'); npStatus.textContent = 'กำลังรับชม'; npStatus.className = 'np-status ok'; showNP(); }, { once: true });
-        video.addEventListener('error', function () { player.classList.remove('loading'); npStatus.textContent = 'เล่นช่องนี้ไม่ได้'; npStatus.className = 'np-status err'; showNP(true); }, { once: true });
+        nativeHandlers = {
+          loadedmetadata: function () {
+            if (!isCurrent(session)) return;
+            player.classList.remove('loading'); setStatus(session, 'กำลังรับชม', 'ok'); video.play().catch(function () {});
+          },
+          error: function () {
+            if (!isCurrent(session)) return;
+            if (recoveryAttempts < maxRecoveryAttempts) {
+              recoveryAttempts++; setStatus(session, 'กำลังเชื่อมต่อใหม่ (' + recoveryAttempts + '/' + maxRecoveryAttempts + ')…', '', true);
+              video.load(); video.play().catch(function () {});
+            } else failChannel(session);
+          }
+        };
+        video.addEventListener('loadedmetadata', nativeHandlers.loadedmetadata);
+        video.addEventListener('error', nativeHandlers.error);
+        video.src = item.url; video.load(); video.play().catch(function () {});
+      } else {
+        failChannel(session);
       }
-      video.play().catch(function () {});
     }
+    retryBtn.addEventListener('click', function (e) { e.stopPropagation(); if (activeItem) loadChannel(activeItem); });
 
     video.addEventListener('ended', function () { video.currentTime = 0; video.play(); });
     video.addEventListener('playing', function () { player.classList.remove('loading'); });
@@ -533,12 +603,19 @@
     }
 
     /* ---- Boot ---- */
-    fetch('iptv.m3u8').then(function (r) { return r.text(); }).then(function (text) {
-      allItems = parseM3U(text);
-      renderChips();
-      renderList();
-      if (allItems.length) loadChannel(allItems[0]);
-    }).catch(function () { npName.textContent = 'โหลดรายชื่อช่องไม่สำเร็จ'; npStatus.textContent = ''; showNP(true); });
+    function showPlaylistError(message) {
+      loadSession++; activeItem = null; activeUrl = null; player.classList.remove('loading');
+      npName.textContent = message; npStatus.textContent = ''; npStatus.className = 'np-status'; retryBtn.classList.remove('show'); showNP(true);
+      listEl.innerHTML = '<div class="empty"></div>'; listEl.firstChild.textContent = message;
+    }
+    fetch('iptv.m3u8').then(function (r) {
+      if (!r.ok) throw new Error('playlist request failed');
+      return r.text();
+    }).then(function (text) {
+      allItems = parseM3U(text).filter(function (item) { return item.name && item.url; });
+      if (!allItems.length) throw new Error('playlist is empty or invalid');
+      renderChips(); renderList(); loadChannel(allItems[0]);
+    }).catch(function () { showPlaylistError('โหลดรายชื่อช่องไม่สำเร็จ'); });
 
     /* ---- PWA ---- */
     if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
