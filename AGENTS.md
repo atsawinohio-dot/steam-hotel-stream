@@ -56,6 +56,16 @@ Some third-party channel streams block cross-origin requests (no `Access-Control
 - **Known limitation:** some origins (e.g. servers themselves fronted by Cloudflare) block requests from Cloudflare's own IP ranges, returning error 1042. The proxy can't work around that — those channels stay broken (currently: CH7 HD, Pluto TV Trending Now).
 - **Known limitation:** extremely long upstream URLs (e.g. Pluto/Paramount+ ad-session tokens) can exceed the proxy's URL-length limit → HTTP 414. Currently affects Paramount+ Picks.
 
+### CH3 (3HD) auto-refresh proxy
+
+3HD's *official* free stream (ch3plus.com) doesn't have a stable public URL — every public mirror found in third-party IPTV lists (thaimomo, v2h-cdn, etc.) was already dead as of 2026-07-19. The real byteark CDN URL is signed and expires ~every 12h, generated server-side and embedded in `https://ch3plus.com/live`'s HTML (`streamUrlWebAVOD` field in the SSR JSON) — there's no separate public token API to call.
+
+- Source: `workers/ch3-proxy/` in this repo (also deployable standalone with `wrangler deploy` from that folder).
+- Deployed as: `steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev`
+- Used directly (no `?url=` param) as the 3HD channel URL: `.../live/playlist.m3u8`
+- How it works: on each request it checks a KV-cached signed query string; if missing/near-expiry it re-fetches `ch3plus.com/live`, regexes out `streamUrlWebAVOD`, and caches the query params (refreshed ~30min before the real `x_ark_expires`). It then proxies the manifest/segments from `ch3-33-web.cdn.byteark.com`, stripping the signed query off every relative URI in `.m3u8` bodies so all follow-up requests keep routing through the worker (which reattaches a fresh token server-side).
+- If this breaks: check whether `ch3plus.com/live`'s HTML still contains `streamUrlWebAVOD":"..."` — if CH3 changes their page structure, the regex in `workers/ch3-proxy/worker.js` needs updating.
+
 ## Editing `iptv.m3u8`
 
 Each channel is two lines:

@@ -1,0 +1,7 @@
+name = "steam-hotel-ch3-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "CH3_TOKEN_CACHE"
+id = "11c66558d1434b988c0f4fae5be7656a"
