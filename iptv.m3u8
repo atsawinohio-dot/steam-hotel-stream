@@ -1,5 +1,5 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="ROYS HOTEL" tvg-logo="https://cdn-683466c1c1ac1808a47e76d2.closte.com/wp-content/uploads/2026/03/ROYS-Logo.webp" group-title="ROYS HOTEL",ROYS HOTEL
+#EXTINF:-1 tvg-id="ROYS HOTEL" tvg-logo="https://www.theroyshotel.com/wp-content/uploads/2026/03/ROYS-Logo.webp" group-title="ROYS HOTEL",ROYS HOTEL
 https://atsawinohio-dot.github.io/steam-hotel-stream/playlist.m3u8
 #EXTINF:-1 tvg-id="3HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/3/32/Ch.3_Logo_%281970%29.png" group-title="Digital TV Thai",3HD
 https://steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev/live/playlist.m3u8
