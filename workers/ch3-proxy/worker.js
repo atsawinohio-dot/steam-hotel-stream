@@ -139,11 +139,11 @@ function rewriteManifest(body) {
   return { rewritten, segmentPaths };
 }
 
-async function fetchFromOrigin(pathname, query) {
+async function fetchFromOrigin(pathname, query, range) {
   const upstreamUrl = `${UPSTREAM_ORIGIN}${pathname}?${query}`;
-  return fetch(upstreamUrl, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; SteamHotelCH3Proxy/1.0)" },
-  });
+  const headers = { "User-Agent": "Mozilla/5.0 (compatible; SteamHotelCH3Proxy/1.0)" };
+  if (range) headers["Range"] = range;
+  return fetch(upstreamUrl, { headers });
 }
 
 function buildSegmentResponse(upstreamRes) {
@@ -196,7 +196,8 @@ export default {
       }
 
       const query = await getSignedQuery(env);
-      const upstreamRes = await fetchFromOrigin(url.pathname, query);
+      const rangeHeader = !isManifest(url.pathname) ? request.headers.get("Range") : null;
+      const upstreamRes = await fetchFromOrigin(url.pathname, query, rangeHeader);
 
       if (!upstreamRes.ok) {
         return new Response(
