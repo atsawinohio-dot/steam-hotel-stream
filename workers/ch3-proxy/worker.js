@@ -225,11 +225,15 @@ export default {
         });
       }
 
-      // Segment (.ts) or anything else: stream through as-is, and warm the
-      // cache for this exact request in case of a retry.
-      const response = buildSegmentResponse(upstreamRes);
-      ctx.waitUntil(cache.put(request, response.clone()));
-      return response;
+      // Segment (.ts) or anything else: stream straight through, no
+      // clone/cache-write on this path — that tees the response stream and
+      // adds just enough backpressure to cause a steady per-segment delay
+      // for players that fetch just-in-time instead of buffering ahead
+      // (this is what caused the M3U IPTV app's rhythmic stutter even
+      // though it was invisible to hls.js, which buffers further ahead).
+      // Caching happens only via the separate prefetch fetch below, which
+      // never touches the response actually sent to the player.
+      return buildSegmentResponse(upstreamRes);
     } catch (err) {
       return new Response(`Proxy error: ${err.message}`, {
         status: 502,
