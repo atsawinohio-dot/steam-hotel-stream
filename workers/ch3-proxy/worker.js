@@ -14,6 +14,13 @@ const TOKEN_SOURCE_PAGE = "https://ch3plus.com/live";
 const KV_KEY = "ch3_signed_query";
 // Real token lives ~43200s (12h); refresh well before that to stay safe.
 const REFRESH_MARGIN_SECONDS = 30 * 60;
+// Cap CH3 at 480p: the app's hls.js starts on whichever variant is listed
+// first with no bandwidth probe (startLevel:0, testBandwidth:false) and
+// only a 10s buffer, so 720p (3.5Mbps) left too little margin for the
+// hotel's real-world network and caused audio stutter. Dropping 720p from
+// the master entirely (not just reordering) also stops ABR from climbing
+// back up to it mid-playback.
+const MAX_BANDWIDTH = 1_500_000; // 480p
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -101,7 +108,9 @@ function rewriteManifest(body) {
         const uri = (lines[i + 1] || "").trim().split("?")[0];
         const bwMatch = line.match(/BANDWIDTH=(\d+)/);
         const bandwidth = bwMatch ? Number(bwMatch[1]) : 0;
-        variants.push({ infoLine: line, uri, bandwidth });
+        if (bandwidth <= MAX_BANDWIDTH) {
+          variants.push({ infoLine: line, uri, bandwidth });
+        }
         i++; // skip the URI line, already captured
       } else if (line.trim() !== "") {
         header.push(line);
