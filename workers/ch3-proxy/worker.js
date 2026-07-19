@@ -21,10 +21,19 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "*",
 };
 
+// Isolate-local cache: avoids a KV round-trip on every segment request for
+// warm invocations (KV reads are fast but not free, and every ~8s segment
+// hitting KV adds up when the player is fetching several ahead at once).
+let memCache = null;
+
 async function getSignedQuery(env) {
-  const cached = await env.CH3_TOKEN_CACHE.get(KV_KEY, "json");
   const now = Date.now();
+  if (memCache && memCache.expiresAt > now) {
+    return memCache.query;
+  }
+  const cached = await env.CH3_TOKEN_CACHE.get(KV_KEY, "json");
   if (cached && cached.expiresAt > now) {
+    memCache = cached;
     return cached.query;
   }
   return refreshSignedQuery(env);
@@ -53,6 +62,7 @@ async function refreshSignedQuery(env) {
     ? (expires - REFRESH_MARGIN_SECONDS) * 1000
     : Date.now() + 10 * 60 * 1000; // fallback: 10 min if we can't parse
 
+  memCache = { query, expiresAt };
   await env.CH3_TOKEN_CACHE.put(
     KV_KEY,
     JSON.stringify({ query, expiresAt }),
@@ -69,9 +79,41 @@ function isManifest(pathname) {
 // Rewrite relative URIs inside an m3u8 body so segment/variant requests
 // keep routing through this worker (stripping any embedded signed query —
 // we re-attach a fresh one server-side on each proxied fetch).
+//
+// For the master playlist specifically, also reorders variants from
+// highest to lowest BANDWIDTH. The app's hls.js is configured with
+// `startLevel: 0, testBandwidth: false` (see index.html) — it always
+// starts on whichever variant is listed first, with no bandwidth probe.
+// Upstream lists CH3's variants lowest-first (144p first), which made
+// every viewer start on a blurry 144p stream. Other channels' playlists
+// already happen to list highest-first, so this keeps CH3 consistent
+// with how the app expects `startLevel: 0` to behave.
 function rewriteManifest(body) {
-  return body
-    .split("\n")
+  const lines = body.split("\n");
+  const isMaster = lines.some((l) => l.startsWith("#EXT-X-STREAM-INF"));
+
+  if (isMaster) {
+    const header = [];
+    const variants = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith("#EXT-X-STREAM-INF")) {
+        const uri = (lines[i + 1] || "").trim().split("?")[0];
+        const bwMatch = line.match(/BANDWIDTH=(\d+)/);
+        const bandwidth = bwMatch ? Number(bwMatch[1]) : 0;
+        variants.push({ infoLine: line, uri, bandwidth });
+        i++; // skip the URI line, already captured
+      } else if (line.trim() !== "") {
+        header.push(line);
+      }
+    }
+    variants.sort((a, b) => b.bandwidth - a.bandwidth);
+    const out = [...header];
+    for (const v of variants) out.push(v.infoLine, v.uri);
+    return out.join("\n");
+  }
+
+  return lines
     .map((line) => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return line;
