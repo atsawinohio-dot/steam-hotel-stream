@@ -21,6 +21,10 @@ const REFRESH_MARGIN_SECONDS = 30 * 60;
 // the master entirely (not just reordering) also stops ABR from climbing
 // back up to it mid-playback.
 const MAX_BANDWIDTH = 1_500_000; // 480p
+// How long a fetched segment stays warm in the edge cache. Segments are
+// ~6-9s each; this just needs to outlive the gap between us prefetching it
+// (as soon as it appears in a manifest) and the player actually asking.
+const SEGMENT_CACHE_SECONDS = 30;
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -88,13 +92,12 @@ function isManifest(pathname) {
 // we re-attach a fresh one server-side on each proxied fetch).
 //
 // For the master playlist specifically, also reorders variants from
-// highest to lowest BANDWIDTH. The app's hls.js is configured with
-// `startLevel: 0, testBandwidth: false` (see index.html) — it always
-// starts on whichever variant is listed first, with no bandwidth probe.
-// Upstream lists CH3's variants lowest-first (144p first), which made
-// every viewer start on a blurry 144p stream. Other channels' playlists
-// already happen to list highest-first, so this keeps CH3 consistent
-// with how the app expects `startLevel: 0` to behave.
+// highest to lowest BANDWIDTH (and drops anything above MAX_BANDWIDTH).
+// The app's hls.js is configured with `startLevel: 0, testBandwidth: false`
+// (see index.html) — it always starts on whichever variant is listed
+// first, with no bandwidth probe. Upstream lists CH3's variants
+// lowest-first (144p first), which made every viewer start on a blurry
+// 144p stream.
 function rewriteManifest(body) {
   const lines = body.split("\n");
   const isMaster = lines.some((l) => l.startsWith("#EXT-X-STREAM-INF"));
@@ -119,21 +122,60 @@ function rewriteManifest(body) {
     variants.sort((a, b) => b.bandwidth - a.bandwidth);
     const out = [...header];
     for (const v of variants) out.push(v.infoLine, v.uri);
-    return out.join("\n");
+    return { rewritten: out.join("\n"), segmentPaths: [] };
   }
 
-  return lines
+  const segmentPaths = [];
+  const rewritten = lines
     .map((line) => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return line;
-      return trimmed.split("?")[0];
+      const clean = trimmed.split("?")[0];
+      if (clean.endsWith(".ts")) segmentPaths.push(clean);
+      return clean;
     })
     .join("\n");
+
+  return { rewritten, segmentPaths };
+}
+
+async function fetchFromOrigin(pathname, query) {
+  const upstreamUrl = `${UPSTREAM_ORIGIN}${pathname}?${query}`;
+  return fetch(upstreamUrl, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; SteamHotelCH3Proxy/1.0)" },
+  });
+}
+
+function buildSegmentResponse(upstreamRes) {
+  const headers = new Headers(upstreamRes.headers);
+  for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
+  headers.set("Cache-Control", `public, max-age=${SEGMENT_CACHE_SECONDS}`);
+  return new Response(upstreamRes.body, { status: upstreamRes.status, headers });
+}
+
+// Warms the edge cache for a segment that just appeared in a manifest, well
+// before the player actually gets around to requesting it (it's still
+// playing through earlier segments). Runs in the background via
+// ctx.waitUntil and never throws.
+async function prefetchSegment(basePathname, segmentFile, origin, query, cache, ctx) {
+  try {
+    const dir = basePathname.slice(0, basePathname.lastIndexOf("/") + 1);
+    const reqUrl = `${origin}${dir}${segmentFile}`;
+    const cacheKey = new Request(reqUrl);
+    if (await cache.match(cacheKey)) return;
+    const upstreamRes = await fetchFromOrigin(`${dir}${segmentFile}`, query);
+    if (!upstreamRes.ok) return;
+    const response = buildSegmentResponse(upstreamRes);
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  } catch (_err) {
+    // Best-effort only — the player will just fetch it directly if this fails.
+  }
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const cache = caches.default;
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS_HEADERS });
@@ -147,11 +189,14 @@ export default {
     }
 
     try {
+      if (!isManifest(url.pathname)) {
+        // Segment request: serve from edge cache if a prefetch already warmed it.
+        const cached = await cache.match(request);
+        if (cached) return cached;
+      }
+
       const query = await getSignedQuery(env);
-      const upstreamUrl = `${UPSTREAM_ORIGIN}${url.pathname}?${query}`;
-      const upstreamRes = await fetch(upstreamUrl, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; SteamHotelCH3Proxy/1.0)" },
-      });
+      const upstreamRes = await fetchFromOrigin(url.pathname, query);
 
       if (!upstreamRes.ok) {
         return new Response(
@@ -162,7 +207,15 @@ export default {
 
       if (isManifest(url.pathname)) {
         const body = await upstreamRes.text();
-        return new Response(rewriteManifest(body), {
+        const { rewritten, segmentPaths } = rewriteManifest(body);
+
+        for (const segFile of segmentPaths) {
+          ctx.waitUntil(
+            prefetchSegment(url.pathname, segFile, url.origin, query, cache, ctx)
+          );
+        }
+
+        return new Response(rewritten, {
           status: 200,
           headers: {
             ...CORS_HEADERS,
@@ -172,13 +225,11 @@ export default {
         });
       }
 
-      // Segment (.ts) or anything else: stream through as-is.
-      const headers = new Headers(upstreamRes.headers);
-      for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
-      return new Response(upstreamRes.body, {
-        status: upstreamRes.status,
-        headers,
-      });
+      // Segment (.ts) or anything else: stream through as-is, and warm the
+      // cache for this exact request in case of a retry.
+      const response = buildSegmentResponse(upstreamRes);
+      ctx.waitUntil(cache.put(request, response.clone()));
+      return response;
     } catch (err) {
       return new Response(`Proxy error: ${err.message}`, {
         status: 502,
