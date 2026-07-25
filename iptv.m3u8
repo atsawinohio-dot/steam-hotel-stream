@@ -10,7 +10,7 @@ https://live-cdn.ch7.com/out/v1/eafeb02c55b64a15b278b1e66c7fc776/playlist_9.m3u8
 #EXTINF:-1 tvg-id="MCOT HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/7/77/MCOT_Ch9_Logo.png" group-title="Digital TV Thai",MCOT HD
 https://mcothd-streaming-edge-cdn.mcot.net/tencentmcot/smil:tencentmcot.smil/chunklist_w124130569_b3000000.m3u8
 #EXTINF:-1 tvg-id="AmarinTV.th" tvg-logo="https://www.amarintv.com/assets/images/global/logo_amarintv34HD.svg" group-title="Digital TV Thai",Amarin TV HD
-https://steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev/live/720p_index.m3u8
+https://steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 #EXTINF:-1 tvg-id="ThaiPBS.th@SD" tvg-logo="https://i.imgur.com/CwalZjr.png" group-title="Digital TV Thai",Thai PBS
 https://thaipbs-live.cdn.byteark.com/live/playlist_720p/index.m3u8
 #EXTINF:-1 tvg-id="BBCNews.uk@NorthAmerica" tvg-logo="https://i.imgur.com/vSz2WEp.png" group-title="News",BBC News

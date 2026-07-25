@@ -84,9 +84,57 @@ export default {
 
     if (url.pathname === "/" || url.pathname === "") {
       return new Response(
-        "Steam Hotel Amarin TV auto-refresh redirect. Use /live/playlist.m3u8",
+        "Steam Hotel Amarin TV auto-refresh redirect. Use /live/playlist_720p.m3u8",
         { headers: CORS_HEADERS }
       );
+    }
+
+    // Single-quality master playlist, synthesised here with a fresh token.
+    //
+    // Amarin's audio is DEMUXED: `720p_index.m3u8` carries video only (verified
+    // with ffprobe - one h264 stream, no audio), and the soundtrack lives in a
+    // separate rendition that a player only discovers through the master
+    // playlist's #EXT-X-MEDIA AUDIO group. Pointing the channel straight at
+    // 720p_index.m3u8 therefore played silently.
+    //
+    // We can't just hand over Amarin's real master: it lists 1080p/6Mbps first,
+    // and `startLevel: 0` in index.html would pin every viewer to it (see
+    // HANDOFF - high bitrates against the app's 10s buffer caused stutter on
+    // CH3, and multi-variant masters upset the owner's "M3U IPTV" Windows app).
+    // So we emit a master with exactly one video variant plus the Thai audio
+    // rendition: audio restored, still effectively single-quality.
+    //
+    // Both URIs point straight at byteark rather than back through this worker,
+    // so the video traffic still leaves from the player's own Thailand IP -
+    // the whole reason this worker redirects instead of proxying. The worker
+    // never fetches byteark itself, so byteark's block on Cloudflare egress
+    // IPs (the 451 that broke CH3) can't affect this path either.
+    if (url.pathname === "/live/playlist_720p.m3u8") {
+      try {
+        const query = await getSignedQuery(env);
+        const body = [
+          "#EXTM3U",
+          "#EXT-X-VERSION:3",
+          '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="group_aud_high",NAME="Thai",DEFAULT=YES,AUTOSELECT=YES,LANGUAGE="THA",' +
+            `URI="${UPSTREAM_ORIGIN}/live/Thai_HD_index.m3u8?${query}"`,
+          '#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720,AUDIO="group_aud_high"',
+          `${UPSTREAM_ORIGIN}/live/720p_index.m3u8?${query}`,
+          "",
+        ].join("\n");
+        return new Response(body, {
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/vnd.apple.mpegurl",
+            // The embedded token expires, so this must never be cached past it.
+            "Cache-Control": "no-store",
+          },
+        });
+      } catch (err) {
+        return new Response(`Proxy error: ${err.message}`, {
+          status: 502,
+          headers: CORS_HEADERS,
+        });
+      }
     }
 
     try {
