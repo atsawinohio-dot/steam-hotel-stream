@@ -14,6 +14,16 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <!-- Start the player library and the channel list downloading immediately,
+       in parallel with the rest of the page, instead of after parsing reaches
+       the <script> tag / the app code calls fetch(). -->
+  <!-- No `crossorigin` on the script hints: the <script> tag below has none
+       either, and a mismatch makes the browser fetch the library twice instead
+       of reusing the preload. The playlist hint does need it, to match the
+       CORS-mode request fetch() makes. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js" as="script">
+  <link rel="preload" href="iptv.m3u8" as="fetch" crossorigin>
   <!-- Warm up DNS for channel CDNs (direct + proxy targets) -->
   <link rel="dns-prefetch" href="//639bc5877c5fe.streamlock.net">
   <link rel="dns-prefetch" href="//live-cdn.ch7.com">
@@ -59,7 +69,11 @@
       background: #000;
       overflow: hidden;
     }
-    .video-wrap { position: absolute; inset: 0; }
+    /* The video always renders inside a 16:9 frame centred in this area; the
+       exact px size is computed in JS (fit16by9) because the area's own aspect
+       ratio differs from the viewport's on wide screens, where the channel
+       list becomes a side panel. */
+    .video-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
     /* Native fullscreen on the video area only (never the channel-list panel) */
     .video-wrap:fullscreen, .video-wrap:-webkit-full-screen {
       position: fixed; inset: 0; width: 100vw; height: 100vh; background: #000;
@@ -73,7 +87,9 @@
       z-index: 9999;
       background: #000;
     }
-    video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
+    /* object-fit: cover so a non-16:9 source (e.g. old 4:3 cartoons) fills the
+       frame by cropping instead of showing black bars. */
+    video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
 
 
     /* ---- Change-channel button (top-right) ---- */
@@ -301,6 +317,41 @@
     function saveFavs() { try { localStorage.setItem('roys_favs', JSON.stringify(favs)); } catch (e) {} }
     function toggleFav(url) { if (favs[url]) delete favs[url]; else favs[url] = 1; saveFavs(); }
 
+    /* ---- Keep the picture in a 16:9 frame on every channel ----
+       The video element is sized to the biggest 16:9 rectangle that fits the
+       video area, so the picture geometry is identical on every channel no
+       matter what aspect ratio the source sends. Done in JS rather than CSS
+       because the video area is NOT the viewport: on wide screens the channel
+       list becomes a side panel, so a viewport media query would compute the
+       wrong orientation. Combined with `object-fit: cover`, a 4:3 source fills
+       the frame by cropping rather than showing black bars. */
+    var lastFitW = -1, lastFitH = -1;
+    function fit16by9() {
+      var w = videoWrap.clientWidth, h = videoWrap.clientHeight;
+      // The area measures 0 before first layout (and while the page is hidden
+      // on some browsers). Leave the CSS fallback in place and try again on the
+      // next tick rather than writing a bogus size.
+      if (!w || !h) return;
+      if (w === lastFitW && h === lastFitH) return;
+      lastFitW = w; lastFitH = h;
+      var fw = w, fh = w * 9 / 16;
+      if (fh > h) { fh = h; fw = h * 16 / 9; }
+      video.style.width = Math.round(fw) + 'px';
+      video.style.height = Math.round(fh) + 'px';
+    }
+    if (window.ResizeObserver) new ResizeObserver(fit16by9).observe(videoWrap);
+    window.addEventListener('resize', fit16by9);
+    window.addEventListener('orientationchange', function () { setTimeout(fit16by9, 150); });
+    window.addEventListener('load', fit16by9);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) fit16by9(); });
+    video.addEventListener('loadedmetadata', fit16by9);
+    // Safety net: ResizeObserver isn't delivered on every browser/state this app
+    // runs in (older smart-TV webviews, pages not currently compositing), and a
+    // stale frame size would letterbox or over-crop the picture. The check is a
+    // no-op unless the area actually changed size, so polling costs nothing.
+    setInterval(fit16by9, 1000);
+    fit16by9();
+
     /* ---- Overlay open/close ---- */
     // Guard against a tap that opens the panel also being seen (via bubbling /
     // the backdrop underneath) as an immediate "tap outside to close" on the
@@ -509,7 +560,14 @@
       if (curIdx !== -1) preconnectNeighbors(curIdx);
 
       if (window.Hls && Hls.isSupported()) {
-        hls = new Hls({ startFragPrefetch: true, testBandwidth: false, startLevel: 0, maxBufferLength: 10, maxMaxBufferLength: 60, manifestLoadingTimeOut: 8000, manifestLoadingMaxRetry: 2, fragLoadingTimeOut: 15000 });
+        // abrEwmaDefaultEstimate: hls.js otherwise assumes 500kbps until it has
+        // measured the connection, which makes ABR crawl up from the lowest
+        // variant and keeps the picture soft for the first several seconds.
+        // Seeding a realistic estimate lets it settle on the sharp variant much
+        // sooner. It only affects how fast quality is reached, not the ceiling.
+        // backBufferLength caps retained past segments so long unattended
+        // sessions (a TV left on all day) don't accumulate memory.
+        hls = new Hls({ startFragPrefetch: true, testBandwidth: false, startLevel: 0, abrEwmaDefaultEstimate: 3000000, maxBufferLength: 10, maxMaxBufferLength: 60, backBufferLength: 60, manifestLoadingTimeOut: 8000, manifestLoadingMaxRetry: 2, fragLoadingTimeOut: 15000 });
         hls.on(Hls.Events.MANIFEST_PARSED, function () {
           if (!isCurrent(session)) return;
           recoveryAttempts = 0; player.classList.remove('loading'); setStatus(session, 'กำลังรับชม', 'ok');
