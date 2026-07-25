@@ -1,0 +1,7 @@
+name = "steam-hotel-amarin-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "AMARIN_TOKEN_CACHE"
+id = "a93d64fad8824a54906d5873a0f1ca77"
