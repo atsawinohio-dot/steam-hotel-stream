@@ -74,7 +74,7 @@
        exact px size is computed in JS (fit16by9) because the area's own aspect
        ratio differs from the viewport's on wide screens, where the channel
        list becomes a side panel. */
-    .video-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .video-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     /* Native fullscreen on the video area only (never the channel-list panel) */
     .video-wrap:fullscreen, .video-wrap:-webkit-full-screen {
       position: fixed; inset: 0; width: 100vw; height: 100vh; background: #000;
@@ -89,8 +89,14 @@
       background: #000;
     }
     /* object-fit: cover so a non-16:9 source (e.g. old 4:3 cartoons) fills the
-       frame by cropping instead of showing black bars. */
-    video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
+       frame by cropping instead of showing black bars. Note this only helps
+       when the SOURCE aspect differs from the frame; bars that a broadcaster
+       baked into a 16:9 picture are handled by the auto-zoom in JS instead. */
+    video {
+      display: block; width: 100%; height: 100%; object-fit: cover; background: #000;
+      transform-origin: center center;
+      transition: transform 180ms ease;
+    }
 
 
     /* ---- Change-channel button (top-right) ---- */
@@ -353,6 +359,89 @@
     setInterval(fit16by9, 1000);
     fit16by9();
 
+    /* ---- Auto-zoom past pillarbox bars baked into the picture ----
+       Some channels (Nickelodeon is the clear case) send a correct 16:9 frame
+       but bake black bars into the left/right of the image whenever they air
+       old 4:3 material — verified with ffmpeg cropdetect: a 1280x720 frame
+       carrying only 960px of picture, 160px of black each side. No aspect-ratio
+       or object-fit trick can recover that, because the side pixels genuinely
+       are black in the stream; the only way to fill the screen is to zoom in.
+       The same channel also airs modern 16:9 shows with no bars, so this has to
+       be detected per-frame rather than configured per-channel. */
+    var BAR_LUMA = 26;          // 0-255; below this a pixel counts as "black"
+    var BAR_MIN_FRACTION = 0.04; // ignore bars thinner than this (encoder noise)
+    var BAR_MAX_SCALE = 1.45;    // never crop more aggressively than this
+
+    // Pure function so the logic can be exercised directly. Takes raw RGBA from
+    // a downscaled frame, returns the zoom factor needed to push symmetric side
+    // bars off screen (1 = leave alone).
+    function computePillarboxScale(data, w, h) {
+      function columnMaxLuma(x) {
+        var max = 0;
+        for (var y = 0; y < h; y++) {
+          var i = (y * w + x) * 4;
+          // Rec.601 luma is plenty for a "is this black" test.
+          var l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          if (l > max) max = l;
+        }
+        return max;
+      }
+      // A frame that has faded to black (or a dark scene) would look like one
+      // giant bar. Require the middle of the picture to have real content
+      // before trusting anything this frame says.
+      if (columnMaxLuma(w >> 1) < BAR_LUMA) return null;
+      var left = 0, right = 0;
+      while (left < w && columnMaxLuma(left) < BAR_LUMA) left++;
+      while (right < w - left && columnMaxLuma(w - 1 - right) < BAR_LUMA) right++;
+      // Real pillarboxing is symmetric. Anything lopsided is just a dark edge in
+      // the content, so leave it alone rather than shifting the picture.
+      if (Math.abs(left - right) > Math.max(1, w * 0.02)) return 1;
+      var bar = Math.min(left, right);
+      if (bar / w < BAR_MIN_FRACTION) return 1;
+      var visible = w - 2 * bar;
+      if (visible <= 0) return 1;
+      return Math.min(w / visible, BAR_MAX_SCALE);
+    }
+
+    var barCanvas = null, barCtx = null, barCanRead = true;
+    var barApplied = 1, barPending = 0, barPendingCount = 0;
+    function resetPillarbox() {
+      barApplied = 1; barPending = 0; barPendingCount = 0;
+      video.style.transform = '';
+    }
+    function detectPillarbox() {
+      if (!barCanRead || video.readyState < 2 || !video.videoWidth) return;
+      var scale;
+      try {
+        if (!barCanvas) {
+          barCanvas = document.createElement('canvas');
+          barCanvas.width = 64; barCanvas.height = 36;
+          barCtx = barCanvas.getContext('2d', { willReadFrequently: true });
+        }
+        barCtx.drawImage(video, 0, 0, barCanvas.width, barCanvas.height);
+        var img = barCtx.getImageData(0, 0, barCanvas.width, barCanvas.height);
+        scale = computePillarboxScale(img.data, barCanvas.width, barCanvas.height);
+      } catch (e) {
+        // Native-HLS playback (iOS Safari) paints from a cross-origin resource,
+        // which taints the canvas and makes getImageData throw. Nothing to be
+        // done there, so stop trying instead of throwing every tick.
+        barCanRead = false;
+        return;
+      }
+      if (scale === null) return; // dark frame, keep whatever we had
+      // Require the same answer twice running before changing anything, so a
+      // single dark shot or a fade can't make the picture jump.
+      if (Math.abs(scale - barPending) > 0.02) { barPending = scale; barPendingCount = 1; return; }
+      barPendingCount++;
+      if (barPendingCount < 2) return;
+      if (Math.abs(scale - barApplied) > 0.02) {
+        barApplied = scale;
+        video.style.transform = scale > 1.02 ? 'scale(' + scale.toFixed(3) + ')' : '';
+      }
+    }
+    setInterval(detectPillarbox, 2000);
+    video.addEventListener('playing', detectPillarbox);
+
     /* ---- Overlay open/close ---- */
     // Guard against a tap that opens the panel also being seen (via bubbling /
     // the backdrop underneath) as an immediate "tap outside to close" on the
@@ -556,6 +645,7 @@
       npLogo.src = item.logo; npLogo.style.display = item.logo ? '' : 'none';
       npName.textContent = item.name;
       setStatus(session, 'กำลังเชื่อมต่อ…', '', true);
+      resetPillarbox();
       disposePlayback();
       var curIdx = allItems.findIndex(function (it) { return it.url === item.url; });
       if (curIdx !== -1) preconnectNeighbors(curIdx);
