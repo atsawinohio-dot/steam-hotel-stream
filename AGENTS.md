@@ -56,6 +56,17 @@ Some third-party channel streams block cross-origin requests (no `Access-Control
 - **Known limitation:** some origins (e.g. servers themselves fronted by Cloudflare) block requests from Cloudflare's own IP ranges, returning error 1042 or 403. The proxy can't work around that — those channels can't be CORS-fixed (currently: CH7 HD, Pluto TV Trending Now). Note CH7's *stream* is fine and plays in native players; it's only unusable in the browser, because CH7's CDN allowlists `https://www.ch7.com` as the sole permitted origin. Fixing it would need a proxy on a Thai IP, not a Cloudflare Worker.
 - **Known limitation:** extremely long upstream URLs (e.g. Pluto/Paramount+ ad-session tokens) can exceed the proxy's URL-length limit → HTTP 414. Currently affects Paramount+ Picks.
 
+### PPTV HD 36 auto-refresh manifest
+
+PPTV serves a signed byteark URL (`x_ark_*`, ~6h validity) from its player iframe at `www-live.pptvhd36.com/api/live_player/program/1`. Same family as CH3/Amarin.
+
+- Source: `workers/pptv-proxy/` in this repo. Deployed as `steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev`, KV binding `PPTV_TOKEN_CACHE`.
+- Used as the channel URL: `.../live/playlist_720p.m3u8`
+- **PPTV's audio is demuxed** — `720p/index.m3u8` is video-only and the soundtrack lives in `audio-hi/th/index.m3u8`, reachable only via the master's `#EXT-X-MEDIA` AUDIO group. So the worker emits a synthesised master (one 720p variant + the Thai audio rendition) rather than pinning at the video rendition. Pinning directly would play silently — the same bug Amarin had.
+- It also can't just redirect to PPTV's real master: that lists 1080p first and declares nonsense `BANDWIDTH` values (1080p tagged 500kbps, 144p 50kbps), so ABR has no usable signal and `startLevel: 0` would pin everyone to 1080p.
+- The worker only fetches pptvhd36.com, never byteark, so byteark's Cloudflare-egress block can't affect it and segments still leave from the player's own Thai IP.
+- If it breaks: check that the player iframe still contains a `...playlist.m3u8?x_ark_...` URL and update the regex in `workers/pptv-proxy/worker.js`. The regex captures the whole URL including host, so a CDN hostname change is handled automatically.
+
 ### Pluto TV CORS shim
 
 Pluto's stitcher replies with `access-control-allow-origin: http://pluto.tv` — a specific foreign origin, not `*` — so browsers reject every response and hls.js can't even read the master playlist. Native players (the owner's "M3U IPTV" app, VLC) ignore CORS, so **Pluto channels look fine there and fail only in the web app**; don't take "it works in the app" as evidence the entry is good.

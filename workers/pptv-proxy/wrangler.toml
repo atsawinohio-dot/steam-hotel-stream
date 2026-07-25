@@ -1,0 +1,7 @@
+name = "steam-hotel-pptv-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "PPTV_TOKEN_CACHE"
+id = "e52533317a2749718dc66052165cc30b"
