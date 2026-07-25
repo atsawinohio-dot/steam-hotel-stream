@@ -53,7 +53,7 @@ Some third-party channel streams block cross-origin requests (no `Access-Control
 - Deployed as: `steam-hotel-iptv-proxy.tiny-hall-8718.workers.dev`
 - Usage: `https://steam-hotel-iptv-proxy.tiny-hall-8718.workers.dev/?url=<url-encoded original stream URL>`
 - It rewrites manifest URIs (segments, sub-playlists, `#EXT-X-KEY` URIs) to also route through the proxy, and adds `Access-Control-Allow-Origin: *`.
-- **Known limitation:** some origins (e.g. servers themselves fronted by Cloudflare) block requests from Cloudflare's own IP ranges, returning error 1042. The proxy can't work around that — those channels stay broken (currently: CH7 HD, Pluto TV Trending Now).
+- **Known limitation:** some origins (e.g. servers themselves fronted by Cloudflare) block requests from Cloudflare's own IP ranges, returning error 1042 or 403. The proxy can't work around that — those channels can't be CORS-fixed (currently: CH7 HD, Pluto TV Trending Now). Note CH7's *stream* is fine and plays in native players; it's only unusable in the browser, because CH7's CDN allowlists `https://www.ch7.com` as the sole permitted origin. Fixing it would need a proxy on a Thai IP, not a Cloudflare Worker.
 - **Known limitation:** extremely long upstream URLs (e.g. Pluto/Paramount+ ad-session tokens) can exceed the proxy's URL-length limit → HTTP 414. Currently affects Paramount+ Picks.
 
 ### Pluto TV CORS shim
