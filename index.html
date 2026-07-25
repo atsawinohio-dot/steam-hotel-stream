@@ -14,8 +14,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- Warm up DNS for channel CDNs -->
-  <link rel="dns-prefetch" href="//live-us1.thaimomo.com">
+  <!-- Warm up DNS for channel CDNs (direct + proxy targets) -->
   <link rel="dns-prefetch" href="//639bc5877c5fe.streamlock.net">
   <link rel="dns-prefetch" href="//live-cdn.ch7.com">
   <link rel="dns-prefetch" href="//mcothd-streaming-edge-cdn.mcot.net">
@@ -24,9 +23,17 @@
   <link rel="dns-prefetch" href="//amdlive-ch01-ctnd-com.akamaized.net">
   <link rel="dns-prefetch" href="//nhk.lls.pbs.org">
   <link rel="dns-prefetch" href="//jmp2.uk">
+  <link rel="dns-prefetch" href="//stitcher-ipv4.pluto.tv">
+  <link rel="dns-prefetch" href="//images.pluto.tv">
   <link rel="dns-prefetch" href="//trace-sportstars-samsungnz.amagi.tv">
   <link rel="dns-prefetch" href="//1a3566cb46914c5499fbc86fbc4ac87e.mediatailor.us-west-2.amazonaws.com">
   <link rel="dns-prefetch" href="//amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv">
+  <link rel="dns-prefetch" href="//steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev">
+  <link rel="dns-prefetch" href="//ch3-33-web.cdn.byteark.com">
+  <link rel="dns-prefetch" href="//steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev">
+  <link rel="dns-prefetch" href="//amarin-ks7jcc.cdn.byteark.com">
+  <link rel="dns-prefetch" href="//thaipbs-live.cdn.byteark.com">
+  <link rel="dns-prefetch" href="//steam-hotel-iptv-proxy.tiny-hall-8718.workers.dev">
   <style>
     :root {
       color-scheme: dark;
@@ -431,6 +438,17 @@
       var n = allItems.length; if (!n) return;
       [idx - 1, idx + 1].forEach(function (j) { var k = (j + n) % n; if (allItems[k]) preconnectOrigin(allItems[k].url); });
     }
+    // Warm every channel's origin (DNS+TCP+TLS) once, after boot, so picking
+    // any channel from the list — not just the ones adjacent to the current
+    // one — starts from an already-open connection. Deferred to idle time so
+    // it never competes with the very first channel's own connection.
+    function preconnectAll() {
+      allItems.forEach(function (item) { preconnectOrigin(item.url); });
+    }
+    function runWhenIdle(fn) {
+      if (window.requestIdleCallback) requestIdleCallback(fn, { timeout: 3000 });
+      else setTimeout(fn, 300);
+    }
 
     /* ---- Sync active highlight across the (single) list by url ---- */
     function markActive() {
@@ -639,6 +657,7 @@
       allItems = parseM3U(text).filter(function (item) { return item.name && item.url; });
       if (!allItems.length) throw new Error('playlist is empty or invalid');
       renderChips(); renderList(); loadChannel(allItems[0]);
+      runWhenIdle(preconnectAll);
     }).catch(function () { showPlaylistError('โหลดรายชื่อช่องไม่สำเร็จ'); });
 
     /* ---- PWA ---- */
