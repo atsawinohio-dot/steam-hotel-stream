@@ -61,6 +61,7 @@ _Nothing in progress._
 
 ## Next up / open threads
 
+- **Know which player the owner is looking at before diagnosing anything visual.** Confirmed 2026-07-25: the owner watches through the **"M3U IPTV" Windows app**, not this repo's web app. So `iptv.m3u8` and worker changes reach them, but **nothing in `index.html` does** — the 16:9 framing, `object-fit: cover`, the pillarbox auto-zoom and the `preconnect`/`preload`/ABR loading speed-ups all only affect guests using the web app/PWA. A screenshot with none of our UI in it (no "เปลี่ยนช่อง" button, no now-playing chip) is the tell. Don't report a client-side fix as solving something the owner sees in that app.
 - Nothing queued. Ask the project owner what's next. As of 2026-07-25 the owner has confirmed all channels play correctly.
 - BBC News is running at 1216x684 rather than 1080p as a deliberate trade for a source that can actually stream in real time — see "Fixed BBC News loading slowly" above before changing it back.
 - ONE31 (ช่องวัน) was investigated and not added; partial findings are recorded above so the next agent doesn't start from scratch.
