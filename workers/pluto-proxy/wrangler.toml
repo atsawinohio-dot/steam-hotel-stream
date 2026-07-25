@@ -1,0 +1,3 @@
+name = "steam-hotel-pluto-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"

@@ -56,6 +56,18 @@ Some third-party channel streams block cross-origin requests (no `Access-Control
 - **Known limitation:** some origins (e.g. servers themselves fronted by Cloudflare) block requests from Cloudflare's own IP ranges, returning error 1042. The proxy can't work around that — those channels stay broken (currently: CH7 HD, Pluto TV Trending Now).
 - **Known limitation:** extremely long upstream URLs (e.g. Pluto/Paramount+ ad-session tokens) can exceed the proxy's URL-length limit → HTTP 414. Currently affects Paramount+ Picks.
 
+### Pluto TV CORS shim
+
+Pluto's stitcher replies with `access-control-allow-origin: http://pluto.tv` — a specific foreign origin, not `*` — so browsers reject every response and hls.js can't even read the master playlist. Native players (the owner's "M3U IPTV" app, VLC) ignore CORS, so **Pluto channels look fine there and fail only in the web app**; don't take "it works in the app" as evidence the entry is good.
+
+- Source: `workers/pluto-proxy/` in this repo.
+- Deployed as: `steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev`
+- Usage: `https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/<plutoChannelId>.m3u8` — the id is the hex string from Pluto's `jmp2.uk/plu-<id>.m3u8` links.
+- It resolves the channel through `jmp2.uk` (which mints a fresh `authToken`), then rewrites the manifest's relative URIs **against the post-redirect stitcher URL** and routes sub-playlists back through itself with `Access-Control-Allow-Origin: *`.
+- Only manifests pass through the worker. Pluto serves segments from `*.plutotv.net` with `access-control-allow-origin: *` already, and media playlists reference them absolutely, so video bandwidth goes player→CDN directly and never touches Cloudflare.
+- The generic `steam-hotel-iptv-proxy` **cannot** do this job: it resolves relative URIs against the URL it was handed rather than the one it landed on after the 302, so it rewrites `1539795/playlist.m3u8` to `jmp2.uk/1539795/playlist.m3u8`, which 404s.
+- The `u` parameter is restricted to `pluto.tv`/`plutotv.net` over https so this can't be used as an open relay.
+
 ### CH3 (3HD) auto-refresh proxy
 
 3HD's *official* free stream (ch3plus.com) doesn't have a stable public URL — every public mirror found in third-party IPTV lists (thaimomo, v2h-cdn, etc.) was already dead as of 2026-07-19. The real byteark CDN URL is signed and expires ~every 12h, generated server-side and embedded in `https://ch3plus.com/live`'s HTML (`streamUrlWebAVOD` field in the SSR JSON) — there's no separate public token API to call.
