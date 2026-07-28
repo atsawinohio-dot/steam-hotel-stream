@@ -23,6 +23,8 @@ https://nhk.lls.pbs.org/index_720p.m3u8
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
 #EXTINF:-1 tvg-id="GravitasMovies.us" tvg-logo="https://i.imgur.com/H2hD4vT.png" group-title="Movies",Gravitas Movies
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
+#EXTINF:-1 tvg-id="PlutoTVTrendingNow.us" tvg-logo="https://images.pluto.tv/channels/673247127d5da5000817b4d6/colorLogoPNG.png" group-title="Movies",Pluto TV Trending Now
+https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/673247127d5da5000817b4d6.m3u8
 #EXTINF:-1 tvg-id="PlutoTVComedyMovies.us" tvg-logo="https://images.pluto.tv/channels/62ea3d24b8e02600071fa296/colorLogoPNG.png" group-title="Movies",Pluto TV Comedy Movies
 https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/62ea3d24b8e02600071fa296.m3u8
 #EXTINF:-1 tvg-id="PlutoTVThrillers.us" tvg-logo="https://images.pluto.tv/channels/5b4e69e08291147bd04a9fd7/colorLogoPNG.png" group-title="Movies",Pluto TV Thrillers
