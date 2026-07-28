@@ -8,10 +8,11 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-25._
+_No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-28._
 
 ## Last completed
 
+- **Nickelodeon removed at owner's request (2026-07-28).** Lineup at 15. No Pluto channels remain in the playlist; `workers/pluto-proxy/` stays deployed (like pptv-proxy/amarin-proxy) — restore the two lines from git history if wanted back. Kids group is now just Toon Goggles. The pillarbox auto-zoom in `index.html` was built for Nickelodeon but is generic — leave it, it's harmless.
 - **Pluto TV Trending Now and Amarin TV HD removed at owner's request (2026-07-25).** Lineup at 16. Movies group is now just Gravitas Movies; the only remaining Pluto channel is Nickelodeon. `workers/amarin-proxy/` stays deployed (like pptv-proxy) — restore from git history if wanted back.
 - **CBS Sports HQ removed at owner's request (2026-07-25).** Lineup at 18 channels. Remaining Pluto channels: Nickelodeon and Pluto TV Trending Now.
 - **PPTV removed from the playlist at owner's request (2026-07-25)** after the AES finding below — rooms with the Samsung TV can't play it and the owner chose to drop it rather than run a mixed lineup. `workers/pptv-proxy/` is still deployed and healthy; re-adding is just restoring the two lines in `iptv.m3u8` (see git history) if a compatible app situation ever changes.
