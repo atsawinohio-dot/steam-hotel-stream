@@ -91,11 +91,13 @@ export default {
 
     // Single-quality master playlist, synthesised here with a fresh token.
     //
-    // Amarin's audio is DEMUXED: `720p_index.m3u8` carries video only (verified
-    // with ffprobe - one h264 stream, no audio), and the soundtrack lives in a
+    // Amarin's audio is DEMUXED: `1080p_index.m3u8` carries video only (verified
+    // with ffprobe - h264 1920x1080, no audio), and the soundtrack lives in a
     // separate rendition that a player only discovers through the master
     // playlist's #EXT-X-MEDIA AUDIO group. Pointing the channel straight at
-    // 720p_index.m3u8 therefore played silently.
+    // 1080p_index.m3u8 therefore played silently. (Route path stays
+    // `/live/playlist_720p.m3u8` for URL stability even though it now serves
+    // 1080p — 2026-07-29, owner asked for 1080p on every channel.)
     //
     // We can't just hand over Amarin's real master: it lists 1080p/6Mbps first,
     // and `startLevel: 0` in index.html would pin every viewer to it (see
@@ -117,8 +119,8 @@ export default {
           "#EXT-X-VERSION:3",
           '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="group_aud_high",NAME="Thai",DEFAULT=YES,AUTOSELECT=YES,LANGUAGE="THA",' +
             `URI="${UPSTREAM_ORIGIN}/live/Thai_HD_index.m3u8?${query}"`,
-          '#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720,AUDIO="group_aud_high"',
-          `${UPSTREAM_ORIGIN}/live/720p_index.m3u8?${query}`,
+          '#EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=1920x1080,AUDIO="group_aud_high"',
+          `${UPSTREAM_ORIGIN}/live/1080p_index.m3u8?${query}`,
           "",
         ].join("\n");
         return new Response(body, {
