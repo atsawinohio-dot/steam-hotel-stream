@@ -12,6 +12,14 @@ _No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-
 
 ## Last completed
 
+- **Loosened bandwidth target back to ~10 Mbps per channel, at owner's request ("ปรับทุกช่องให้ได้ 10 Mbps/ช่อง") (2026-07-29) — supersedes both the ~5 Mbps and ~6.5 Mbps passes below.** The hotel line is 10 Mbps/TV, so restored every channel the two tightening passes had dropped a resolution step, back to its top-of-ladder rung. Verified each URL still returns 200 before pinning.
+  - **✅ BBC News: 960x540 (~3.04 Mbps) → 1280x720 (~5.29 Mbps).** Back to `v=pv14/b=5070016/main.m3u8` (was the pre-tightening pin).
+  - **✅ Al Jazeera: 1280x720 (~3.13 Mbps) → 1920x1080 (~6.32 Mbps).** Back to `AJA/01.m3u8`.
+  - **✅ CH7 HD: 1280x720 (~4.24 Mbps) → 1080p (~8.66 Mbps).** Back to `playlist_9.m3u8`.
+  - **✅ Lego Channel: 1280x720 (~2.67 Mbps) → 1920x1080 (~6.13 Mbps declared AVERAGE-BANDWIDTH).** Pinned to `index/1.m3u8` (confirmed via the CloudFront master: rung 1 = 1080p/6.13Mbps, rung 2 = 720p/2.68Mbps — the master itself, not a bare 1080p pin, since that ambiguity caused a bug two passes ago).
+  - **Arirang TV, Red Bull TV, and everything else already at their top rung** were untouched — they were never dropped by the 5/6.5 Mbps passes.
+  - **Not yet confirmed by the owner on the real hotel setup.**
+
 - **Tightened bandwidth target to ~5 Mbps per channel, at owner's request ("ช่อง ละ 5 Mbps") (2026-07-29) — supersedes the ~6.5 Mbps pass below.** Of the 19-channel lineup, only the 3 channels the previous pass explicitly left alone (because they were under 6.5 but not under 5) were over the new target; everything else measured earlier this session was already under 5 Mbps and untouched.
   - **✅ BBC News: 5.29 Mbps @ 1280x720 → ~3.04 Mbps @ 960x540.** Pinned to `t=3840/v=pv13/b=2812032/main.m3u8` instead of `.../v=pv14/b=5070016/main.m3u8` on the same `vs-hls-push-ww-live.akamaized.net` master (full ladder 192x108→1280x720; the rung directly below the old 720p pin is 960x540, nothing between). Verified: ffprobe h264 960x540 + aac (muxed), 3 segments measured ~3.04 Mbps real (declared BANDWIDTH 3.12 Mbps, close). Short stable non-tokenized URL, same as before.
   - **✅ Al Jazeera: 6.32 Mbps @ 1920x1080 → ~3.13 Mbps @ 1280x720.** Pinned to `AJA/02.m3u8` instead of `AJA/01.m3u8` on the same `live-hls-apps-aja-fa.getaj.net` master. Verified: ffprobe h264 1280x720 + aac (muxed), 3 segments measured ~3.13 Mbps real (declared BANDWIDTH 3.12 Mbps — manifest accurate here). Short stable non-tokenized URL.
