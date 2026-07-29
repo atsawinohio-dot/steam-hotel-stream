@@ -12,6 +12,9 @@ _No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-
 
 ## Last completed
 
+- **Lego Channel: reverted 1080p → 720p, at owner's request ("ปรับให้เหมาะสม แต่ยังโหลด เร็ว คมชัด") (2026-07-29) — resolves the tradeoff flagged in the pass below.** Re-measured both rungs on the same CloudFront host: 1080p (`index/1.m3u8`) ratio ~0.41-0.47, 720p (`index/2.m3u8`) ratio ~0.29-0.33 — a real, consistent ~25-30% speed gain from stepping down one rung, unlike every other channel where 1080p already loads fast. Pinned to `index/2.m3u8`. Every other channel's current pin already balances fast+sharp with no tradeoff (ratio <0.15 even at their pinned resolution), so nothing else changed.
+  - **Not yet confirmed by the owner on the real hotel setup.**
+
 - **Full speed/sharpness re-check across all 19 channels at their current (post-1080p-push) pinned URLs, at owner's request ("ปรับทุกช่องให้เหมาะสม โหลดเร็ว คมชัด") (2026-07-29).** Measured segment-fetch ratio (download time / `#EXTINF` duration, averaged over 2-3 segments) for every channel's live URL, then re-tested the 4 highest-ratio channels through the generic `steam-hotel-iptv-proxy` to see if proxying would help. **No `iptv.m3u8` changes — every channel is already at the best available tradeoff.**
   - **15 of 19 channels: ratio 0.02-0.12 (excellent, no action).** 3HD, TV5 HD, CH7 HD, MCOT HD, Amarin TV HD, Thai PBS, BBC News, Al Jazeera, Gravitas Movies, Pluto TV Trending Now, TRACE Sport Stars, Red Bull TV, Toon Goggles, beIN SPORTS XTRA (erratic 0.05-0.40 but averages ~0.17, consistent with the known-erratic pattern noted in an earlier pass), Arirang TV's neighbors.
   - **4 channels flagged for a closer look, all already the best available option — proxy tested and made every one of them slower, confirming direct is correct:**
