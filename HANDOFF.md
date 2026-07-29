@@ -12,6 +12,18 @@ _No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-
 
 ## Last completed
 
+- **Pushed every channel to 1080p where the source allows it, at owner's request ("ทุกช่อง 1080p") (2026-07-29) — builds on the 10 Mbps loosening below.** Went through all 19 third-party channels checking real resolution (ffprobe) and available rungs (master playlists / worker source):
+  - **✅ Red Bull TV: 720p (`master_3360.m3u8`) → 1080p (`master_6660.m3u8`, 7.6 Mbps).** Same rung the earlier CDN swap had already verified — the 6.5 Mbps bandwidth pass had dropped it back to 720p since, now reverted. ffprobe confirms 1920x1080.
+  - **✅ Amarin TV HD: 720p → 1080p.** Byteark's origin has an undocumented `1080p_index.m3u8` video-only rendition (same demuxed-audio pattern as `720p_index.m3u8`) — found by probing, not listed in any master. `workers/amarin-proxy/worker.js` now synthesizes the master pointing at it instead, deployed. ffprobe confirms h264 1920x1080, audio group unchanged (Thai, demuxed). Route path (`/live/playlist_720p.m3u8`) left as-is for URL stability even though it now serves 1080p.
+  - **Already at 1080p, confirmed via ffprobe, no change needed:** MCOT HD (1920x1080, top of its 4-rung ladder — bitrate-only labels, no RESOLUTION tag, don't be fooled by the `b3000000` filename), Arirang TV, TV5 HD, Thai PBS, NHK World-Japan HD, Al Jazeera, Lego Channel, CH7 HD (all already reverted to top rung in the 10 Mbps pass above), plus Gravitas Movies, TRACE Sport Stars, beIN SPORTS XTRA, SportsGrid (filenames say 1080p and were already believed accurate from prior passes).
+  - **Checked, no 1080p source exists — left unchanged:**
+    - **BBC News**: full ladder tops out at 1280x720 (`v=pv14/b=5070016`, already pinned) — no 1080p rung on this Akamai master at all.
+    - **Toon Goggles**: master lists 720p first *and it's the ceiling* — no higher rung.
+    - **Pluto TV Trending Now**: Pluto's own CDN caps all three of its variants at 1216x684 — a Pluto-wide limitation, not something this channel's proxy can fix.
+    - **CH3 (3HD)**: confirmed by testing — the free AVOD token from `ch3plus.com/live` carries `x_ark_max_resolution=720p` server-side; requesting a `playlist_1080p` path with that token still returns 720p content. No legitimate 1080p route for the free stream.
+    - **CCTV4**: `dash2.antik.sk` is a single-variant 720p media playlist (not a master) — no alternate rung. Per the loudness-audit pass earlier this file, the only 1080p-capable alternative found was an unauthorized IPTV redistribution panel, declined on legitimacy grounds; still declined here for the same reason.
+  - **Not yet confirmed by the owner on the real hotel setup.**
+
 - **Loosened bandwidth target back to ~10 Mbps per channel, at owner's request ("ปรับทุกช่องให้ได้ 10 Mbps/ช่อง") (2026-07-29) — supersedes both the ~5 Mbps and ~6.5 Mbps passes below.** The hotel line is 10 Mbps/TV, so restored every channel the two tightening passes had dropped a resolution step, back to its top-of-ladder rung. Verified each URL still returns 200 before pinning.
   - **✅ BBC News: 960x540 (~3.04 Mbps) → 1280x720 (~5.29 Mbps).** Back to `v=pv14/b=5070016/main.m3u8` (was the pre-tightening pin).
   - **✅ Al Jazeera: 1280x720 (~3.13 Mbps) → 1920x1080 (~6.32 Mbps).** Back to `AJA/01.m3u8`.
