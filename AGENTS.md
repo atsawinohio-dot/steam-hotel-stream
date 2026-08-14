@@ -24,6 +24,9 @@ index.html          Everything: markup, CSS, and JS in one file. This is the who
 iptv.m3u8            Channel list (M3U8 playlist format: #EXTINF + logo/group metadata + stream URL per channel).
 playlist.m3u8         HLS playlist for the hotel's own looping welcome video (ROYS HOTEL channel).
 segment_*.ts          The 5 video segments that playlist.m3u8 loops through (~10.4h loop via repeated refs + EXT-X-DISCONTINUITY).
+promo/segment_*.ts    The 6 segments (4.000s each, exactly 24s total) of the hotel's signage reel (ROYS PROMO channel).
+promo/playlist.m3u8   Static 24h VOD loop of those segments. NOT what the channel points at — kept as a fallback;
+                      the live channel URL is workers/promo-loop, which loops forever (see below).
 manifest.webmanifest  PWA manifest (name, icons, standalone display).
 sw.js                 Service worker: network-first cache of the app shell for offline/fast reload.
 icon-*.png, apple-touch-icon.png, favicon-32.png   PWA/app icons.
@@ -89,6 +92,18 @@ Pluto's stitcher replies with `access-control-allow-origin: http://pluto.tv` —
 - Used directly (no `?url=` param) as the 3HD channel URL: `.../live/playlist.m3u8`
 - How it works: on each request it checks a KV-cached signed query string; if missing/near-expiry it re-fetches `ch3plus.com/live`, regexes out `streamUrlWebAVOD`, and caches the query params (refreshed ~30min before the real `x_ark_expires`). It then proxies the manifest/segments from `ch3-33-web.cdn.byteark.com`, stripping the signed query off every relative URI in `.m3u8` bodies so all follow-up requests keep routing through the worker (which reattaches a fresh token server-side).
 - If this breaks: check whether `ch3plus.com/live`'s HTML still contains `streamUrlWebAVOD":"..."` — if CH3 changes their page structure, the regex in `workers/ch3-proxy/worker.js` needs updating.
+
+### ROYS PROMO endless-loop generator
+
+A static playlist can only loop a *finite* number of times before `#EXT-X-ENDLIST` stops the channel. To make the hotel's own signage reel run forever, the manifest is generated per request instead.
+
+- Source: `workers/promo-loop/` in this repo. No KV, no secrets — `wrangler deploy` from that folder is all it takes.
+- Deployed as: `steam-hotel-promo-loop.tiny-hall-8718.workers.dev`
+- Used as the ROYS PROMO channel URL: `.../playlist.m3u8`
+- How it works: emits a 6-segment sliding-window LIVE playlist (no `EXT-X-ENDLIST`) positioned by wall-clock time — `floor(elapsed / 4) mod 6` picks the segment that should be airing. **This depends on the reel being an exact multiple of the segment duration** (24.000s = 6 × 4.000s); if the reel is ever re-encoded to a length that doesn't divide evenly, the clock arithmetic drifts and the constants at the top of `worker.js` must be updated to match.
+- Side effect worth knowing: because position comes from the clock, every TV in the hotel shows the same frame at the same time, like a real broadcast channel, rather than each guest starting the reel from frame 0.
+- Only the manifest goes through the worker; segment URIs are absolute GitHub Pages URLs (Pages already sends `Access-Control-Allow-Origin: *`), so video bandwidth is player→Pages and never touches Cloudflare — same split as the Pluto shim.
+- `promo/playlist.m3u8` (static, 24h then stops) is left in the repo as a fallback if the worker ever needs to be bypassed.
 
 ## Editing `iptv.m3u8`
 
