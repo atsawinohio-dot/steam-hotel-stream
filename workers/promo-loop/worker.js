@@ -47,7 +47,12 @@ function buildPlaylist(nowSeconds) {
     // segment_000 is a genuine discontinuity. Players need the running count
     // of discontinuities that scrolled off the top of the window, otherwise
     // they mis-order the timeline after a reconnect.
-    `#EXT-X-DISCONTINUITY-SEQUENCE:${Math.ceil(firstTick / SEGMENT_COUNT)}`,
+    //
+    // A tag sits before every segment whose tick is a non-zero multiple of
+    // SEGMENT_COUNT, so the ones already gone are those with tick in
+    // [1, firstTick) — note the tag at firstTick itself is still *in* the
+    // window, which is why this is (firstTick - 1) and not firstTick.
+    `#EXT-X-DISCONTINUITY-SEQUENCE:${Math.max(0, Math.floor((firstTick - 1) / SEGMENT_COUNT))}`,
   ];
 
   for (let i = firstTick; i <= tick; i++) {
