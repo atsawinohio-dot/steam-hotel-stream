@@ -93,7 +93,9 @@ Pluto's stitcher replies with `access-control-allow-origin: http://pluto.tv` —
 - How it works: on each request it checks a KV-cached signed query string; if missing/near-expiry it re-fetches `ch3plus.com/live`, regexes out `streamUrlWebAVOD`, and caches the query params (refreshed ~30min before the real `x_ark_expires`). It then proxies the manifest/segments from `ch3-33-web.cdn.byteark.com`, stripping the signed query off every relative URI in `.m3u8` bodies so all follow-up requests keep routing through the worker (which reattaches a fresh token server-side).
 - If this breaks: check whether `ch3plus.com/live`'s HTML still contains `streamUrlWebAVOD":"..."` — if CH3 changes their page structure, the regex in `workers/ch3-proxy/worker.js` needs updating.
 
-### ROYS PROMO endless-loop generator
+### ROYS PROMO endless-loop generator (not currently in the lineup)
+
+**The ROYS PROMO channel was removed from `iptv.m3u8` at the owner's request (2026-08-17).** The worker below is still deployed and the `promo/` segments are still in the repo, so re-adding the channel is just restoring its two `#EXTINF` lines. Everything else in this section still describes how it works.
 
 A static playlist can only loop a *finite* number of times before `#EXT-X-ENDLIST` stops the channel. To make the hotel's own signage reel run forever, the manifest is generated per request instead.
 
