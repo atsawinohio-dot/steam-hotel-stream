@@ -89,10 +89,10 @@ Pluto's stitcher replies with `access-control-allow-origin: http://pluto.tv` —
 
 - Source: `workers/ch3-proxy/` in this repo (also deployable standalone with `wrangler deploy` from that folder).
 - Deployed as: `steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev`
-- Used directly (no `?url=` param) as the 3HD channel URL: `.../live/playlist.m3u8`
+- Used directly (no `?url=` param) as the 3HD channel URL: `.../live/720p/index.m3u8` — a *media* playlist, deliberately not the master. The player re-fetches this URL every few seconds to refresh the live window, and each of those hits goes through the worker, which reattaches a current token. Point it at the master instead and the player only touches the worker once, then keeps using byteark URLs carrying whatever token was frozen at load time — playback dies with `PLAYER_ERROR_CONNECTION_FAILED` once that token ages out.
 - How it works: on each request it checks a KV-cached signed query string; if missing/near-expiry it re-fetches `ch3plus.com/live`, regexes out `streamUrlWebAVOD`, and caches the query params (refreshed ~30min before the real `x_ark_expires`). It then 302-redirects to `ch3-33-web.cdn.byteark.com` + the same path + a fresh signed query, so the video traffic leaves from the player's own Thai IP (byteark 451s Cloudflare's egress IPs).
 - If this breaks: check whether `ch3plus.com/live`'s HTML still contains `streamUrlWebAVOD":"..."` — if CH3 changes their page structure, the regex in `workers/ch3-proxy/worker.js` needs updating.
-- 2026-09-02: byteark renamed the variant paths (`/live/playlist_720p/index.m3u8` → `/live/720p/index.m3u8`), which 404'd the pinned-720p URL the playlist was using. Fixed by pointing 3HD at the master `/live/playlist.m3u8` instead — the master lists the variants relative to itself, so a future rename won't break it again. If 3HD 404s, re-check the path in `streamUrlWebAVOD`.
+- 2026-09-02: byteark renamed the variant paths (`/live/playlist_720p/index.m3u8` → `/live/720p/index.m3u8`), which 404'd the URL the playlist was using. Fixed by updating the pinned path. If 3HD 404s again, fetch `ch3plus.com/live`, pull `streamUrlWebAVOD`, load that master playlist and read the current variant path out of it.
 
 ### ROYS PROMO endless-loop generator (not currently in the lineup)
 

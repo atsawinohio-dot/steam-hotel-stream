@@ -91,7 +91,7 @@ export default {
 
     if (url.pathname === "/" || url.pathname === "") {
       return new Response(
-        "Steam Hotel CH3 auto-refresh redirect. Use /live/playlist.m3u8",
+        "Steam Hotel CH3 auto-refresh redirect. Use /live/720p/index.m3u8",
         { headers: CORS_HEADERS }
       );
     }
