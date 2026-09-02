@@ -81,6 +81,28 @@ async function refreshSignedQuery(env) {
   return query;
 }
 
+// byteark has renamed these paths under us before (2026-09-02: the variant
+// playlists moved from `/live/playlist_720p/index.m3u8` to `/live/720p/index.m3u8`),
+// and IPTV clients cache the channel URL they were given, so stale URLs keep
+// arriving long after the playlist is fixed. Map every URL this channel has
+// ever used onto the one that works today.
+//
+// The master playlist gets folded into a media playlist on purpose: its variant
+// URIs are relative, so a player that loads the master follows them straight to
+// byteark and then never comes back through here — it keeps reusing whichever
+// token was frozen into that master, and playback dies when the token expires.
+// Serving a media playlist keeps every live-window refresh routed through the
+// worker, where it picks up a current token.
+const CANONICAL_MEDIA_PATH = "/live/720p/index.m3u8";
+
+function normalizePath(pathname) {
+  if (pathname === "/live/playlist.m3u8") {
+    return CANONICAL_MEDIA_PATH;
+  }
+  // /live/playlist_720p/index.m3u8 -> /live/720p/index.m3u8
+  return pathname.replace(/\/live\/playlist_(\d+p)\//, "/live/$1/");
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -98,7 +120,7 @@ export default {
 
     try {
       const query = await getSignedQuery(env);
-      const upstreamUrl = `${UPSTREAM_ORIGIN}${url.pathname}?${query}`;
+      const upstreamUrl = `${UPSTREAM_ORIGIN}${normalizePath(url.pathname)}?${query}`;
       return new Response(null, {
         status: 302,
         headers: {
