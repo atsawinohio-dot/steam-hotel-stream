@@ -20,6 +20,7 @@ if (Get-Process obs64 -ErrorAction SilentlyContinue) {
     exit 1
 }
 
+$started = Get-Date
 $shot = Join-Path ([Environment]::GetFolderPath('MyPictures')) 'roys-camera.jpg'
 $clip = Join-Path $env:TEMP 'roys-camera-shot.mkv'
 
@@ -32,6 +33,15 @@ if (-not (Test-Path $clip)) {
 }
 
 cmd /c "ffmpeg -hide_banner -loglevel error -y -i `"$clip`" -vf `"select=eq(n\,40)`" -vframes 1 `"$shot`" 2>&1" | Out-Null
+
+# ถ้ารูปเดิมเปิดค้างอยู่ในแอปดูรูป Windows จะล็อกไฟล์ไว้ ffmpeg เขียนทับไม่ได้และไม่บอก
+# ผลคือเจ้าของเห็นรูปเก่าคู่กับตัวเลขใหม่ (ตัวเลขอ่านจากคลิป ไม่ได้อ่านจากรูป)
+# ดูจากเวลาแก้ไขไฟล์ ถ้าไม่ใช่รอบนี้ให้เซฟชื่อใหม่แทน
+if ((Test-Path $shot) -and ((Get-Item $shot).LastWriteTime -lt $started)) {
+    $shot = Join-Path ([Environment]::GetFolderPath('MyPictures')) ("roys-camera-{0}.jpg" -f (Get-Date -Format 'HHmmss'))
+    cmd /c "ffmpeg -hide_banner -loglevel error -y -i `"$clip`" -vf `"select=eq(n\,40)`" -vframes 1 `"$shot`" 2>&1" | Out-Null
+    Say 'รูปเดิมถูกเปิดค้างไว้ เลยเซฟเป็นไฟล์ใหม่ให้ (ปิดหน้าต่างดูรูปเก่าด้วย)'
+}
 
 # วัดความสว่างจากทั้งคลิป ไม่ใช่เฟรมเดียว
 $statsDir = $env:TEMP
