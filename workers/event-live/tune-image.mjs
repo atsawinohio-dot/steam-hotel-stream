@@ -117,7 +117,7 @@ function ffprobeStats(file) {
         };
         const y = grab("YAVG");
         if (y === null) return reject(new Error("อ่านค่าจากภาพไม่ได้: " + out.slice(-300)));
-        resolve({ YAVG: y, YHIGH: grab("YHIGH"), YLOW: grab("YLOW"), YMIN: grab("YMIN"), YMAX: grab("YMAX"), SATAVG: grab("SATAVG") });
+        resolve({ YAVG: y, YHIGH: grab("YHIGH"), YLOW: grab("YLOW"), YMIN: grab("YMIN"), YMAX: grab("YMAX"), SATAVG: grab("SATAVG"), SATMAX: grab("SATMAX") });
       }
     );
   });
@@ -175,14 +175,16 @@ async function setColor(obs, settings) {
 // หา gamma สูงสุดที่ยังไม่ทำให้ภาพเต็มไปด้วย noise
 // ต้องทำก่อนไล่หาความสว่าง เพราะในห้องมืดการดัน gamma จะได้ตัวเลขความสว่างที่ดู
 // เข้าเป้า แต่ภาพจริงเป็นจุดสีรบกวนทั้งจอ
-async function findGammaCeiling(obs, base, noiseLimit) {
+async function findGammaCeiling(obs, base, noiseLimit, satLimit) {
   let ceiling = 0;
   for (const g of [0.4, 0.8, 1.2, 1.6, 2.0, 2.5, 3.0]) {
     await setColor(obs, { ...base, gamma: g });
     const m = await measure(obs);
-    const bad = m.noise > noiseLimit;
-    say(`   ตรวจ noise ที่ gamma ${g.toFixed(1)}  ->  noise ${m.noise.toFixed(2)} (เพดาน ${noiseLimit.toFixed(2)})  YAVG ${m.YAVG.toFixed(1)}${bad ? "  << เกิน" : ""}`);
-    if (bad) break;
+    const noisy = m.noise > noiseLimit;
+    const blotchy = m.SATMAX > satLimit;
+    const why = noisy ? "  << noise เกิน" : blotchy ? "  << สีเพี้ยนเกิน" : "";
+    say(`   ตรวจที่ gamma ${g.toFixed(1)}  ->  noise ${m.noise.toFixed(2)}/${noiseLimit.toFixed(2)}  สีจัดสุด ${m.SATMAX.toFixed(0)}/${satLimit.toFixed(0)}  YAVG ${m.YAVG.toFixed(1)}${why}`);
+    if (noisy || blotchy) break;
     ceiling = g;
   }
   return ceiling;
@@ -260,11 +262,19 @@ try {
     await setColor(obs, { ...base, gamma: 0 });
     const neutral = await measure(obs);
     const noiseLimit = Math.max(neutral.noise * 1.5, MAX_NOISE);
+    // การดัน gamma ในที่มืดทำให้ noise สีในเงากลายเป็นปื้นม่วง ซึ่งเป็นคนละอาการกับ
+    // noise ที่กระพริบระหว่างเฟรม — ปื้นสีนิ่งอยู่กับที่ ตัววัดความต่างระหว่างเฟรมจึงจับไม่ได้
+    //
+    // ต้องใช้ SATMAX (สีที่จัดที่สุดในภาพ) ไม่ใช่ SATAVG: วัดกับฉากผ้าม่านซีดแล้ว
+    // SATAVG กลับ *ลดลง* ตอน gamma สูง (11.3 -> 10.3) เพราะผ้าม่านซีดกินพื้นที่
+    // ส่วนใหญ่จนกลบปื้นม่วงที่อยู่ในเงา ขณะที่ SATMAX ไต่ตรง ๆ 32 -> 44 -> 60 -> 75
+    const satLimit = Math.max(neutral.SATMAX * 1.25, 36);
     say(`noise ที่ค่ากลาง ${neutral.noise.toFixed(2)} (ภาพเดิมวัดได้ ${before.noise?.toFixed(2)} เพราะถูก brightness อัดจนแบน)`);
-    say(`จะไม่ดัน gamma จนกว่า noise เกิน ${noiseLimit.toFixed(2)}`);
+    say(`สีจัดสุดที่ค่ากลาง ${neutral.SATMAX.toFixed(0)}`);
+    say(`เพดาน: noise ${noiseLimit.toFixed(2)} · สีจัดสุด ${satLimit.toFixed(0)}`);
     say("");
     say("หาเพดาน gamma ที่ภาพยังไม่เละ");
-    const ceiling = await findGammaCeiling(obs, base, noiseLimit);
+    const ceiling = await findGammaCeiling(obs, base, noiseLimit, satLimit);
     say(`เพดาน gamma = ${ceiling.toFixed(1)}`);
     say("");
 
@@ -290,7 +300,7 @@ try {
     say("");
     say("=================== ผลลัพธ์ ===================");
     say(`ค่าที่ควรใช้: gamma ${final.gamma}  contrast ${final.contrast}  saturation ${final.saturation}  brightness ${final.brightness}`);
-    say(`ได้ภาพที่ YAVG ${after.YAVG.toFixed(1)} (เป้า ${TARGET_YAVG})  ระดับดำ ${after.YMIN}  YHIGH ${after.YHIGH?.toFixed(0)} (ไม่เกิน ${MAX_YHIGH})  noise ${after.noise?.toFixed(2)}`);
+    say(`ได้ภาพที่ YAVG ${after.YAVG.toFixed(1)} (เป้า ${TARGET_YAVG})  ระดับดำ ${after.YMIN}  YHIGH ${after.YHIGH?.toFixed(0)} (ไม่เกิน ${MAX_YHIGH})  noise ${after.noise?.toFixed(2)}  สีจัดสุด ${after.SATMAX?.toFixed(0)}`);
     if (after.YAVG < TARGET_YAVG - 15) {
       say("");
       say(`*** ยังสว่างไม่ถึงเป้า (${after.YAVG.toFixed(0)} จาก ${TARGET_YAVG}) ***`);
