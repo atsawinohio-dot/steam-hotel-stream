@@ -95,6 +95,9 @@
       <button id="micBtn" disabled>🎤 ปิดไมค์</button>
       <button id="standbyBtn" disabled>⏸ ภาพพักรอ</button>
     </div>
+    <div class="row">
+      <button id="camBtn" disabled>📱 ใช้กล้องมือถือ</button>
+    </div>
 
     <div class="card" id="health"></div>
     <div class="foot">อัปเดตอัตโนมัติทุก 4 วินาที · หน้าจอนี้กินโควตาเฉพาะตอนเปิดดูอยู่</div>
@@ -136,6 +139,7 @@ $("mainBtn").onclick = () => {
 };
 $("micBtn").onclick = () => send(state?.agent?.micMuted ? "unmute" : "mute");
 $("standbyBtn").onclick = () => send(state?.agent?.scene === "พักรอ" ? "camera" : "standby");
+$("camBtn").onclick = () => send(state?.agent?.rig === "phone" ? "usbcam" : "phonecam");
 
 function isOn() { const a = state?.agent; return !!(state?.channel?.live || a?.streaming); }
 const ACTION_TH = { start: "เริ่มถ่ายทอดสด", stop: "หยุดถ่ายทอดสด", mute: "ปิดไมค์", unmute: "เปิดไมค์", standby: "ภาพพักรอ", camera: "กลับไปที่กล้อง" };
@@ -161,6 +165,11 @@ function render() {
   $("micBtn").textContent = a?.micMuted ? "🎤 เปิดไมค์" : "🎤 ปิดไมค์";
   $("micBtn").className = a?.micMuted ? "on" : "";
   $("micBtn").disabled = busy || !laptopOnline || !a?.obs?.connected;
+  // Labelled with what pressing it does, not with what is on air now.
+  const onPhone = a?.rig === "phone";
+  $("camBtn").textContent = onPhone ? "🎥 ใช้กล้อง USB" : "📱 ใช้กล้องมือถือ";
+  $("camBtn").className = onPhone ? "on" : "";
+  $("camBtn").disabled = busy || !laptopOnline || !a?.obs?.connected;
   $("standbyBtn").textContent = standby ? "📷 กลับไปที่กล้อง" : "⏸ ภาพพักรอ";
   $("standbyBtn").className = standby ? "on" : "";
   $("standbyBtn").disabled = busy || !laptopOnline || !a?.obs?.connected;

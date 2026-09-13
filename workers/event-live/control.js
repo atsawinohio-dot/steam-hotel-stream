@@ -12,7 +12,7 @@
 // was offline expires instead of firing hours later.
 
 const COMMAND_TTL_MS = 3 * 60_000;
-const ACTIONS = new Set(["start", "stop", "mute", "unmute", "standby", "camera"]);
+const ACTIONS = new Set(["start", "stop", "mute", "unmute", "standby", "camera", "usbcam", "phonecam"]);
 const SESSION_MS = 12 * 3600_000;
 const LOGIN_WINDOW_MS = 10 * 60_000;
 const LOGIN_MAX_FAILS = 10;
@@ -152,7 +152,10 @@ export class Control {
       if (!ACTIONS.has(body.action)) return json({ error: "unknown action" }, 400);
       this.pruneCommands(now);
       // A newer press of the same kind of button replaces an unsent older one.
-      const opposite = { start: "stop", stop: "start", mute: "unmute", unmute: "mute", standby: "camera", camera: "standby" };
+      const opposite = {
+        start: "stop", stop: "start", mute: "unmute", unmute: "mute",
+        standby: "camera", camera: "standby", usbcam: "phonecam", phonecam: "usbcam",
+      };
       this.commands = this.commands.filter((c) => c.action !== body.action && c.action !== opposite[body.action]);
       this.commands.push({ id: this.nextId++, action: body.action, at: now });
       this.save();

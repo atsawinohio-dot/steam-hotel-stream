@@ -36,6 +36,12 @@ const STANDBY_IMAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 // rigs keep working (and so the mute button never fails after a swap).
 const MIC_INPUTS = ["ไมค์กล้อง USB", "ไมค์มือถือ (Camo)", "ไมค์โน้ตบุ๊ก (สำรอง)"];
 const CAMERA_INPUT = "กล้อง USB";
+// The phone rig, kept in the scene since the Camo days and switchable again as
+// a second angle. A "rig" is a camera and its mic together: switching video
+// without the audio would leave the wrong microphone live.
+const PHONE_INPUT = "กล้อง Camo (มือถือ)";
+const PHONE_MIC = "ไมค์มือถือ (Camo)";
+const USB_MIC = "ไมค์กล้อง USB";
 const RTMP_IN = "rtmp://127.0.0.1:1935/live/event";
 const OBS_WS_CONFIG = path.join(process.env.APPDATA, "obs-studio", "plugin_config", "obs-websocket", "config.json");
 const CAMO_LOG_DIR = path.join(
@@ -338,10 +344,64 @@ function camoStatus() {
   }
 }
 
+// ------------------------------------------------------------- rigs ----
+
+async function setItemEnabled(sceneName, sourceName, enabled) {
+  const { sceneItems } = await obs.request("GetSceneItemList", { sceneName });
+  const item = sceneItems.find((i) => i.sourceName === sourceName);
+  if (!item) return false;
+  await obs.request("SetSceneItemEnabled", { sceneName, sceneItemId: item.sceneItemId, sceneItemEnabled: enabled });
+  return true;
+}
+
+// Which rig is live, read back from OBS rather than remembered here — a
+// variable would drift the moment anyone touched the scene in the OBS window.
+// Falls back to the scene file on disk, because the one caller that matters
+// most (deciding whether to kill Camo Studio) runs before OBS is even open.
+function rigFromSceneFile() {
+  try {
+    const file = path.join(process.env.APPDATA, "obs-studio", "basic", "scenes", "ROYS_Event.json");
+    const scene = JSON.parse(readFileSync(file, "utf8").replace(/^﻿/, ""));
+    for (const s of scene.sources || []) {
+      if (s.id !== "scene" || s.name !== CAMERA_SCENE) continue;
+      const item = (s.settings?.items || []).find((i) => i.name === PHONE_INPUT);
+      if (item?.visible) return "phone";
+    }
+  } catch {}
+  return "usb";
+}
+
+async function activeRig() {
+  if (obs.connected) {
+    try {
+      const { sceneItems } = await obs.request("GetSceneItemList", { sceneName: CAMERA_SCENE });
+      const phone = sceneItems.find((i) => i.sourceName === PHONE_INPUT);
+      return phone?.sceneItemEnabled ? "phone" : "usb";
+    } catch {}
+  }
+  return rigFromSceneFile();
+}
+
+async function setRig(which) {
+  const phone = which === "phone";
+  if (phone && !(await setItemEnabled(CAMERA_SCENE, PHONE_INPUT, true))) {
+    throw new Error(`ไม่พบ source '${PHONE_INPUT}' ในฉาก`);
+  }
+  if (!phone) await setItemEnabled(CAMERA_SCENE, PHONE_INPUT, false);
+  await setItemEnabled(CAMERA_SCENE, PHONE_MIC, phone);
+  await setItemEnabled(CAMERA_SCENE, CAMERA_INPUT, !phone);
+  await setItemEnabled(CAMERA_SCENE, USB_MIC, !phone);
+  obs.micInput = phone ? PHONE_MIC : USB_MIC;
+  log("สลับไปกล้อง" + (phone ? "มือถือ" : " USB"));
+}
+
 // ----------------------------------------------------------- commands ----
 
-const ACTIONS_LOCAL = new Set(["start", "stop", "mute", "unmute", "standby", "camera"]);
-const ACTION_TH = { start: "เริ่มถ่ายทอดสด", stop: "หยุดถ่ายทอดสด", mute: "ปิดไมค์", unmute: "เปิดไมค์", standby: "ภาพพักรอ", camera: "กลับไปที่กล้อง" };
+const ACTIONS_LOCAL = new Set(["start", "stop", "mute", "unmute", "standby", "camera", "usbcam", "phonecam"]);
+const ACTION_TH = {
+  start: "เริ่มถ่ายทอดสด", stop: "หยุดถ่ายทอดสด", mute: "ปิดไมค์", unmute: "เปิดไมค์",
+  standby: "ภาพพักรอ", camera: "กลับไปที่กล้อง", usbcam: "ใช้กล้อง USB", phonecam: "ใช้กล้องมือถือ",
+};
 
 async function run(action, source = "มือถือ") {
   log(`คำสั่งจาก${source}:`, ACTION_TH[action] || action);
@@ -350,7 +410,10 @@ async function run(action, source = "มือถือ") {
     // With the USB camera it is the opposite: a running Camo Studio holds the
     // camera open and OBS then fails with "Insufficient system resources", so
     // it gets closed instead.
-    if (await isRunning("CamoStudio.exe")) {
+    // …but only when the USB camera is the one going on air. With the phone rig
+    // selected, Camo Studio is the thing feeding the channel, so killing it is
+    // exactly wrong.
+    if ((await activeRig()) === "usb" && (await isRunning("CamoStudio.exe"))) {
       log("ปิด Camo Studio (แย่งกล้อง USB อยู่)");
       await new Promise((resolve) =>
         execFile("taskkill", ["/IM", "CamoStudio.exe", "/F"], { windowsHide: true }, () => resolve())
@@ -382,6 +445,9 @@ async function run(action, source = "มือถือ") {
   } else if (action === "standby" || action === "camera") {
     if (!(await ensureObs({ launch: false }))) throw new Error("OBS ยังไม่เปิด");
     await obs.request("SetCurrentProgramScene", { sceneName: action === "standby" ? STANDBY_SCENE : CAMERA_SCENE });
+  } else if (action === "usbcam" || action === "phonecam") {
+    if (!(await ensureObs({ launch: false }))) throw new Error("OBS ยังไม่เปิด");
+    await setRig(action === "phonecam" ? "phone" : "usb");
   }
 }
 
@@ -418,13 +484,20 @@ async function collectStatus() {
       // dead device, because it only means "this source is in the live scene".
       try {
         const { sceneItems } = await obs.request("GetSceneItemList", { sceneName: CAMERA_SCENE });
-        const item = sceneItems.find((i) => i.sourceName === CAMERA_INPUT);
+        // Report whichever camera is actually switched on, not always the USB one.
+        const phoneOn = !!sceneItems.find((i) => i.sourceName === PHONE_INPUT)?.sceneItemEnabled;
+        status.rig = phoneOn ? "phone" : "usb";
+        const liveInput = phoneOn ? PHONE_INPUT : CAMERA_INPUT;
+        // Keep the mic that mute/meter act on tied to the rig that is live,
+        // otherwise the mute button silences a microphone nobody can hear.
+        obs.micInput = phoneOn ? PHONE_MIC : USB_MIC;
+        const item = sceneItems.find((i) => i.sourceName === liveInput);
         const t = item?.sceneItemTransform;
         status.camera = item
-          ? { name: CAMERA_INPUT, active: !!t && t.sourceWidth > 0, width: t?.sourceWidth ?? 0, height: t?.sourceHeight ?? 0 }
+          ? { name: liveInput, active: !!t && t.sourceWidth > 0, width: t?.sourceWidth ?? 0, height: t?.sourceHeight ?? 0 }
           : null;
       } catch {
-        status.camera = null; // this scene collection has no USB camera source
+        status.camera = null; // this scene collection has no camera source
       }
     } catch (e) {
       status.obsError = e.message;
