@@ -18,6 +18,8 @@ param(
     [switch] $WhiteBalanceAuto,
     [int]    $Exposure,
     [switch] $ExposureAuto,
+    [int]    $Focus,
+    [switch] $FocusAuto,
     [int]    $Hue,
     [int]    $Brightness,
     [int]    $Contrast,
@@ -180,6 +182,8 @@ if ($PSBoundParameters.ContainsKey('Saturation'))   { "Saturation -> $Saturation
 if ($PSBoundParameters.ContainsKey('Gain'))         { "Gain -> $Gain : "               + [Cam]::Set($Device, 'amp', 9, $Gain, 2); $did = $true }
 if ($PSBoundParameters.ContainsKey('Exposure'))     { "Exposure -> $Exposure : "       + [Cam]::Set($Device, 'cam', 4, $Exposure, 2); $did = $true }
 if ($ExposureAuto)                                  { "Exposure -> auto : "            + [Cam]::Set($Device, 'cam', 4, 0, 1); $did = $true }
+if ($PSBoundParameters.ContainsKey('Focus'))        { "Focus -> $Focus : "             + [Cam]::Set($Device, 'cam', 6, $Focus, 2); $did = $true }
+if ($FocusAuto)                                     { "Focus -> auto : "               + [Cam]::Set($Device, 'cam', 6, 0, 1); $did = $true }
 
 if ($did) { Write-Host ''; Write-Host 'ค่าหลังตั้ง:' -ForegroundColor Cyan }
 Show-Controls
