@@ -31,7 +31,11 @@ const STANDBY_SCENE = "พักรอ";
 // repo next to the agent so a fresh clone has it.
 const STANDBY_INPUT = "โลโก้พักรอ";
 const STANDBY_IMAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "standby.png");
-const MIC_INPUT = "ไมค์มือถือ (Camo)";
+// The mic changed when the hotel moved from the phone to the USB camera. Try
+// them in order and use whichever the scene collection actually has, so both
+// rigs keep working (and so the mute button never fails after a swap).
+const MIC_INPUTS = ["ไมค์กล้อง USB", "ไมค์มือถือ (Camo)", "ไมค์โน้ตบุ๊ก (สำรอง)"];
+const CAMERA_INPUT = "กล้อง USB";
 const RTMP_IN = "rtmp://127.0.0.1:1935/live/event";
 const OBS_WS_CONFIG = path.join(process.env.APPDATA, "obs-studio", "plugin_config", "obs-websocket", "config.json");
 const CAMO_LOG_DIR = path.join(
@@ -80,6 +84,16 @@ class Obs {
     this.pending = new Map();
     this.nextId = 1;
     this.micPeak = 0; // loudest mic peak (linear) since the last status report
+    this.micInput = MIC_INPUTS[0];
+  }
+
+  // Which of the known mic sources this scene collection actually has.
+  async resolveMic() {
+    const { inputs } = await this.request("GetInputList");
+    const names = new Set(inputs.map((i) => i.inputName));
+    const found = MIC_INPUTS.find((n) => names.has(n));
+    if (found && found !== this.micInput) log("ไมค์ที่ใช้:", found);
+    if (found) this.micInput = found;
   }
 
   get connected() {
@@ -116,7 +130,7 @@ class Obs {
           else p.reject(new Error(msg.d.requestStatus.comment || `${msg.d.requestType} ไม่สำเร็จ`));
         } else if (msg.op === 5 && msg.d.eventType === "InputVolumeMeters") {
           for (const input of msg.d.eventData.inputs) {
-            if (input.inputName !== MIC_INPUT) continue;
+            if (input.inputName !== this.micInput) continue;
             for (const ch of input.inputLevelsMul || []) this.micPeak = Math.max(this.micPeak, ch[1] || 0);
           }
         }
@@ -190,6 +204,7 @@ async function ensureObs({ launch }) {
     try {
       await obs.connect();
       log("เชื่อม OBS แล้ว");
+      await obs.resolveMic();
       await ensureStandbyScene();
       return true;
     } catch {
@@ -323,8 +338,16 @@ const ACTION_TH = { start: "เริ่มถ่ายทอดสด", stop: "
 async function run(action, source = "มือถือ") {
   log(`คำสั่งจาก${source}:`, ACTION_TH[action] || action);
   if (action === "start") {
-    if (!(await isRunning("CamoStudio.exe"))) {
-      spawn("explorer.exe", [CAMO_APP], { detached: true, stdio: "ignore" }).unref();
+    // Camo used to be started here, back when the camera was the owner's phone.
+    // With the USB camera it is the opposite: a running Camo Studio holds the
+    // camera open and OBS then fails with "Insufficient system resources", so
+    // it gets closed instead.
+    if (await isRunning("CamoStudio.exe")) {
+      log("ปิด Camo Studio (แย่งกล้อง USB อยู่)");
+      await new Promise((resolve) =>
+        execFile("taskkill", ["/IM", "CamoStudio.exe", "/F"], { windowsHide: true }, () => resolve())
+      );
+      await sleep(1500);
     }
     if (!(await ensureObs({ launch: true }))) throw new Error("เปิด OBS ไม่ได้");
     const { outputActive } = await obs.request("GetStreamStatus");
@@ -347,7 +370,7 @@ async function run(action, source = "มือถือ") {
     if (!listener) await clearChannel();
   } else if (action === "mute" || action === "unmute") {
     if (!(await ensureObs({ launch: false }))) throw new Error("OBS ยังไม่เปิด");
-    await obs.request("SetInputMute", { inputName: MIC_INPUT, inputMuted: action === "mute" });
+    await obs.request("SetInputMute", { inputName: obs.micInput, inputMuted: action === "mute" });
   } else if (action === "standby" || action === "camera") {
     if (!(await ensureObs({ launch: false }))) throw new Error("OBS ยังไม่เปิด");
     await obs.request("SetCurrentProgramScene", { sceneName: action === "standby" ? STANDBY_SCENE : CAMERA_SCENE });
@@ -377,8 +400,17 @@ async function collectStatus() {
       status.reconnecting = st.outputReconnecting;
       status.streamSeconds = Math.round((st.outputDuration || 0) / 1000);
       status.scene = (await obs.request("GetCurrentProgramScene")).currentProgramSceneName;
-      status.micMuted = (await obs.request("GetInputMute", { inputName: MIC_INPUT })).inputMuted;
+      status.micMuted = (await obs.request("GetInputMute", { inputName: obs.micInput })).inputMuted;
       status.micDb = obs.takeMicDb();
+      // Whether the camera is actually delivering frames, which is what the
+      // owner needs to know — a source can exist and still show black (the USB
+      // camera does exactly that when something else holds it open).
+      try {
+        const { videoActive } = await obs.request("GetSourceActive", { sourceName: CAMERA_INPUT });
+        status.camera = { name: CAMERA_INPUT, active: !!videoActive };
+      } catch {
+        status.camera = null; // this scene collection has no USB camera source
+      }
     } catch (e) {
       status.obsError = e.message;
     }

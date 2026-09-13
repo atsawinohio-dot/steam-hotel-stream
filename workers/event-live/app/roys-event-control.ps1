@@ -171,7 +171,7 @@ $rows = @{}
 $rowNames = @(
     @('agent', 'ตัวควบคุมบนโน้ตบุ๊ก'),
     @('obs',   'OBS'),
-    @('camo',  'กล้อง/ไมค์มือถือ'),
+    @('camo',  'กล้อง'),
     @('cloud', 'เซิร์ฟเวอร์ + โควตาวันนี้')
 )
 $y = 12
@@ -476,11 +476,19 @@ $timer.Add_Tick({
     elseif ($st -and $st.obs -and $st.obs.running) { Set-Row 'obs' 'เปิดอยู่ แต่ยังไม่เชื่อม' $cAmber }
     else { Set-Row 'obs' 'ยังไม่เปิด (กดเริ่มแล้วเปิดเอง)' $cMuted }
 
-    if ($st -and $st.camo -and $st.camo.connected) {
+    # The USB camera reports whether it is really putting frames on air. It is
+    # legitimately "not showing" while the standby card is up, so that case is
+    # not an error.
+    if ($st -and $st.camera) {
+        if ($st.camera.active) { Set-Row 'camo' 'กล้อง USB · ส่งภาพอยู่' $cGreen }
+        elseif ($script:onStandby) { Set-Row 'camo' 'กล้อง USB · พร้อม (ขึ้นภาพพักรออยู่)' $cMuted }
+        elseif (-not $live) { Set-Row 'camo' 'กล้อง USB · พร้อม' $cMuted }
+        else { Set-Row 'camo' 'กล้อง USB ไม่ส่งภาพ!' $cRed }
+    } elseif ($st -and $st.camo -and $st.camo.connected) {
         $dev = if ($st.camo.device) { $st.camo.device } else { 'มือถือ' }
-        Set-Row 'camo' ('เชื่อมแล้ว · ' + $dev) $cGreen
+        Set-Row 'camo' ('มือถือ · ' + $dev) $cGreen
     } elseif ($st -and $st.camo -and $st.camo.running) { Set-Row 'camo' 'มือถือยังไม่ต่อ' $cAmber }
-    else { Set-Row 'camo' 'ยังไม่ได้เปิด Camo' $cMuted }
+    else { Set-Row 'camo' '—' $cMuted }
 
     if ($fresh -and $data.online -and $ch) {
         $used = [int]$ch.requestsToday; $budget = [int]$ch.dailyBudget
@@ -503,7 +511,8 @@ $timer.Add_Tick({
     if ($st -and $st.lastError) { $msg = $st.lastError }
     elseif ($st -and $st.reconnecting) { $msg = 'OBS กำลังเชื่อมต่อใหม่…' }
     elseif ($script:pendingAction) { $msg = 'กำลังสั่งงาน…' }
-    elseif ($live -and $st -and $st.camo -and -not $st.camo.connected) { $msg = 'มือถือหลุดจาก Camo — ภาพที่ออกอากาศอาจเป็นจอเปล่า' }
+    elseif ($live -and $st -and $st.camera -and -not $st.camera.active -and -not $script:onStandby) { $msg = 'กล้องไม่ส่งภาพ — ภาพที่ออกอากาศเป็นจอดำ (เช็กสาย USB / ปิด Camo Studio)' }
+    elseif ($live -and $st -and -not $st.camera -and $st.camo -and -not $st.camo.connected) { $msg = 'มือถือหลุดจาก Camo — ภาพที่ออกอากาศอาจเป็นจอเปล่า' }
     $lblError.Text = $msg
   } catch {
     # A failed repaint must never take the window down: the agent is what keeps
