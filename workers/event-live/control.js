@@ -53,8 +53,13 @@ function safeEqual(a, b) {
 }
 
 async function sessionValid(request, env, now) {
+  // ไม่ได้ตั้ง secret CONTROL_PASSWORD ไว้ = เปิดให้ใครก็ได้ที่มีลิงก์ใช้งานโดยไม่ต้องล็อกอิน
+  // (เจ้าของเลือกเองเมื่อ 2026-09-14 เพราะพิมพ์รหัสบนมือถือทุก 12 ชม. แล้วรำคาญ)
+  // ตั้ง secret กลับเข้าไปเมื่อไหร่ หน้าควบคุมก็กลับมาถามรหัสทันที ไม่ต้องแก้โค้ด:
+  //   wrangler secret put CONTROL_PASSWORD
+  if (!env.CONTROL_PASSWORD) return true;
   const m = (request.headers.get("Cookie") || "").match(/(?:^|;\s*)ctl=([^;]+)/);
-  if (!m || !env.CONTROL_PASSWORD) return false;
+  if (!m) return false;
   const [exp, sig] = m[1].split(".");
   if (!exp || !sig || Number(exp) < now) return false;
   return safeEqual(sig, await hmac(env.CONTROL_PASSWORD, `session:${exp}`));
@@ -110,6 +115,8 @@ export class Control {
     if (path === "/control/agent" && method === "POST") return this.agentPoll(request, now, channel);
 
     if (path === "/control/api/login" && method === "POST") {
+      // ไม่มีรหัสตั้งไว้ = ผ่านเลย เผื่อหน้าเว็บเก่าที่ยังค้างอยู่ในมือถือส่งฟอร์มมา
+      if (!this.env.CONTROL_PASSWORD) return json({ ok: true });
       this.fails = this.fails.filter((t) => now - t < LOGIN_WINDOW_MS);
       if (this.fails.length >= LOGIN_MAX_FAILS) return json({ error: "ลองผิดหลายครั้งเกินไป รอ 10 นาทีแล้วลองใหม่" }, 429);
       const body = await request.json().catch(() => ({}));
