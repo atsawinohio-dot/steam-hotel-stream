@@ -36,6 +36,23 @@ const CORS = {
 };
 const PLAYLIST_TYPE = "application/vnd.apple.mpegurl";
 
+// Tell the player where to begin instead of letting it pick.
+//
+// Left alone, an HLS player buffers three segments before it shows anything,
+// which at 6s segments is 18 seconds of staring at a blank channel after
+// someone presses "start" — measured 2026-09-14, and it was the bulk of the
+// ~25s startup (OBS launching and connecting accounts for only about 6s).
+//
+// EXT-X-START moves the starting point to one segment back from the live edge.
+// It costs nothing: the playlist is already being fetched, so this adds no
+// requests and none of the daily budget, unlike shortening the segments.
+// One segment of margin rather than zero, so a player that is briefly slow
+// still has something buffered instead of stalling on the first frame.
+function startAtLiveEdge(playlist) {
+  if (!playlist || playlist.includes("#EXT-X-START")) return playlist;
+  return playlist.replace("#EXTM3U", "#EXTM3U\n#EXT-X-START:TIME-OFFSET=-6,PRECISE=YES");
+}
+
 function text(body, status = 200, extra = {}) {
   return new Response(body, {
     status,
@@ -218,7 +235,7 @@ export class EventChannel {
         });
       }
       if (!this.live(now)) return text("Not live", 404, { "Cache-Control": "no-store" });
-      return new Response(method === "HEAD" ? null : this.playlist, {
+      return new Response(method === "HEAD" ? null : startAtLiveEdge(this.playlist), {
         headers: { ...CORS, "Content-Type": PLAYLIST_TYPE, "Cache-Control": "no-cache, no-store, max-age=0" },
       });
     }

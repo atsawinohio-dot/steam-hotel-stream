@@ -276,9 +276,17 @@ async function clearChannel() {
 
 function startListener() {
   if (listener) return;
+  // hls_init_time cuts the FIRST segment short (at the next keyframe after 2s,
+  // and OBS keyframes every 2s) while everything after it stays at hls_time 6.
+  // Startup is what this buys: a player has something to fetch about 4 seconds
+  // sooner, and the steady-state request rate — the thing the daily budget
+  // actually cares about — is unchanged, because segment length after the
+  // first one is the same. Shortening hls_time instead would multiply the
+  // request count by the same factor it divides the latency by.
   const args = [
     "-hide_banner", "-loglevel", "error", "-listen", "1", "-i", RTMP_IN, "-c", "copy",
-    "-f", "hls", "-hls_time", "6", "-hls_list_size", "6", "-method", "PUT", "-http_persistent", "1",
+    "-f", "hls", "-hls_time", "6", "-hls_init_time", "2", "-hls_list_size", "6",
+    "-method", "PUT", "-http_persistent", "1",
     "-headers", `Authorization: Bearer ${token}\r\n`,
     "-hls_segment_filename", `${BASE}/live/seg_%06d.ts`, `${BASE}/live/index.m3u8`,
   ];
