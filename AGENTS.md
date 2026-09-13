@@ -8,6 +8,15 @@ A single-page IPTV web app for ROYS Hotel: fullscreen live-TV player with a slid
 
 Live site: https://atsawinohio-dot.github.io/steam-hotel-stream/
 
+## Open work (2026-09-13)
+
+The full, machine-specific handoff (status table, workspace layout on the hotel laptop, where secrets live, gotchas) is in `E:\Steam Hotel\CLAUDE.md` on the hotel laptop — Claude Code loads it automatically when opened anywhere under that folder. Summary for anyone working from a fresh clone:
+
+1. **Channel 21 remote control — in progress, not deployed.** `workers/event-live/control.js`, `control.html`, `agent/agent.mjs`, `setup-control.ps1` and the matching `worker.js` / `wrangler.toml` edits are written but untested. Next: deploy, run `setup-control.ps1` with OBS closed, run the agent, test `/control` end to end, then document it in the channel 21 section below.
+2. Verify channel 21 audio with real speech (phone mic via Camo, OBS gain filter +20 dB).
+3. The phone drops off Wi-Fi in Camo; move events to a USB cable (Camo's `ignoredDevices` currently lists the phone's USB serial — remove it with the owner's OK).
+4. The owner still needs to disable the laptop's built-in webcam in Device Manager (it wedges every camera when opened).
+
 ## Multi-agent handoff protocol
 
 This project gets worked on by more than one AI tool (Claude Code, ChatGPT Codex, Antigravity IDE), sometimes in the same day, never in the same session. To avoid re-deriving context every time:
