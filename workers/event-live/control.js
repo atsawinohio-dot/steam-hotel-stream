@@ -21,6 +21,14 @@ const PREVIEW_MAX_BYTES = 200_000;
 // is running; otherwise the idle agent costs ~2,900 requests a day, not ~17,000.
 const VIEWER_ACTIVE_MS = 60_000;
 const FAST_POLL_S = 4;
+// While the channel is streaming but nobody has the control page open there is
+// nothing to deliver, yet the agent was still polling every 4s — 900 requests
+// an hour, 10,800 across a 12-hour day, spent on asking a question whose answer
+// was always "nothing". At 15s that becomes 2,880. The moment someone opens the
+// page, viewerActive puts it back to FAST_POLL_S within one cycle, so a button
+// press still lands quickly; the desktop program's mic meter is unaffected
+// because that reads OBS locally, not through the worker.
+const STREAM_POLL_S = 15;
 const SLOW_POLL_S = 30;
 
 const enc = new TextEncoder();
@@ -193,10 +201,10 @@ export class Control {
     this.save(preview);
 
     const viewerActive = now - this.viewerSeen < VIEWER_ACTIVE_MS;
-    const busy = viewerActive || this.commands.length > 0 || body.status?.streaming;
+    const busy = viewerActive || this.commands.length > 0;
     return json({
       commands: this.commands.map((c) => ({ id: c.id, action: c.action })),
-      pollSeconds: busy ? FAST_POLL_S : SLOW_POLL_S,
+      pollSeconds: busy ? FAST_POLL_S : body.status?.streaming ? STREAM_POLL_S : SLOW_POLL_S,
       wantPreview: viewerActive,
       // Sent back so the desktop program on the laptop can show whether the
       // channel is actually on air, and how much of today's budget is left,

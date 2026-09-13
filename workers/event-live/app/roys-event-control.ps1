@@ -3,7 +3,7 @@
 # It owns the control agent (../agent/agent.mjs) instead of leaving it in a
 # console window that nobody is supposed to close: it starts the agent hidden,
 # restarts it if it ever dies, shows what the channel / OBS / phone are doing,
-# and sends the same six commands the phone page sends.
+# and sends the same commands the phone page sends (including the camera swap).
 #
 # Everything here is local. Buttons go through E:\Steam Hotel\event-agent-command.txt
 # and the display comes from event-agent-status.json, both written by the agent,
@@ -112,7 +112,7 @@ function Get-DotIcon([Drawing.Color]$color) {
 
 $form = New-Object Windows.Forms.Form
 $form.Text = 'ROYS Hotel · ควบคุมช่อง 21'
-$form.ClientSize = New-Object Drawing.Size(440, 566)
+$form.ClientSize = New-Object Drawing.Size(440, 618)
 $form.BackColor = $cBg
 $form.ForeColor = $cText
 $form.Font = New-Font 10
@@ -140,16 +140,19 @@ $btnStart = New-Button '▶  เริ่มถ่ายทอดสด' 18 152 
 $btnStop  = New-Button '■  หยุดถ่ายทอดสด' 224 152 198 54 $cRed ([Drawing.Color]::White)
 $btnMic   = New-Button 'ปิดไมค์' 18 214 198 46 $cCard $cText
 $btnScene = New-Button 'ภาพพักรอ' 224 214 198 46 $cCard $cText
-$form.Controls.AddRange(@($btnStart, $btnStop, $btnMic, $btnScene))
+# Full width on its own row: switching the camera swaps the microphone with it,
+# so it is a bigger move than the two above and should not look like a twin.
+$btnCam   = New-Button 'ใช้กล้องมือถือ' 18 266 404 40 $cCard $cText
+$form.Controls.AddRange(@($btnStart, $btnStop, $btnMic, $btnScene, $btnCam))
 
 # --- mic level
-$form.Controls.Add((New-Label 'ระดับเสียงไมค์' 18 274 150 22 (New-Font 9.5) $cMuted))
-$lblDb = New-Label '' 300 274 122 22 (New-Font 9.5) $cMuted
+$form.Controls.Add((New-Label 'ระดับเสียงไมค์' 18 326 150 22 (New-Font 9.5) $cMuted))
+$lblDb = New-Label '' 300 326 122 22 (New-Font 9.5) $cMuted
 $lblDb.TextAlign = 'MiddleRight'
 $form.Controls.Add($lblDb)
 
 $meter = New-Object Windows.Forms.Panel
-$meter.Location = New-Object Drawing.Point(18, 298)
+$meter.Location = New-Object Drawing.Point(18, 350)
 $meter.Size = New-Object Drawing.Size(404, 14)
 $meter.BackColor = $cCard
 $form.Controls.Add($meter)
@@ -162,7 +165,7 @@ $meter.Controls.Add($meterFill)
 
 # --- the four things that can go wrong
 $cardState = New-Object Windows.Forms.Panel
-$cardState.Location = New-Object Drawing.Point(18, 326)
+$cardState.Location = New-Object Drawing.Point(18, 378)
 $cardState.Size = New-Object Drawing.Size(404, 128)
 $cardState.BackColor = $cCard
 $form.Controls.Add($cardState)
@@ -184,19 +187,20 @@ foreach ($row in $rowNames) {
     $y += 28
 }
 
-$lblError = New-Label '' 18 458 404 34 (New-Font 9) $cAmber
+$lblError = New-Label '' 18 510 404 34 (New-Font 9) $cAmber
 $form.Controls.Add($lblError)
 
 # --- footer: the phone page, the log, and whether to start with Windows
-$btnLink = New-Button 'คัดลอกลิงก์หน้ามือถือ' 18 496 136 30 $cCard $cText
-$btnPw   = New-Button 'คัดลอกรหัสผ่าน' 160 496 126 30 $cCard $cText
-$btnLog  = New-Button 'เปิดบันทึก' 292 496 130 30 $cCard $cText
-$btnLink.Font = New-Font 9; $btnPw.Font = New-Font 9; $btnLog.Font = New-Font 9
-$form.Controls.AddRange(@($btnLink, $btnPw, $btnLog))
+# The password button is gone: the control page stopped asking for one on
+# 2026-09-14, so copying it only invited someone to type a dead secret.
+$btnLink = New-Button 'คัดลอกลิงก์หน้ามือถือ' 18 548 200 30 $cCard $cText
+$btnLog  = New-Button 'เปิดบันทึก' 222 548 200 30 $cCard $cText
+$btnLink.Font = New-Font 9; $btnLog.Font = New-Font 9
+$form.Controls.AddRange(@($btnLink, $btnLog))
 
 $chkAuto = New-Object Windows.Forms.CheckBox
 $chkAuto.Text = 'เปิดโปรแกรมนี้อัตโนมัติเมื่อเปิดเครื่อง'
-$chkAuto.Location = New-Object Drawing.Point(18, 532)
+$chkAuto.Location = New-Object Drawing.Point(18, 584)
 $chkAuto.Size = New-Object Drawing.Size(404, 24)
 $chkAuto.ForeColor = $cMuted
 $chkAuto.Font = New-Font 9
@@ -393,19 +397,11 @@ $btnStart.Add_Click({ Send-Command 'start' })
 $btnStop.Add_Click({ Send-Command 'stop' })
 $btnMic.Add_Click({ Send-Command $(if ($script:micMuted) { 'unmute' } else { 'mute' }) })
 $btnScene.Add_Click({ Send-Command $(if ($script:onStandby) { 'camera' } else { 'standby' }) })
+$btnCam.Add_Click({ Send-Command $(if ($script:onPhoneCam) { 'usbcam' } else { 'phonecam' }) })
 
 $btnLink.Add_Click({
     [Windows.Forms.Clipboard]::SetText($ControlUrl)
     $tray.ShowBalloonTip(3000, 'คัดลอกแล้ว', 'ลิงก์หน้าควบคุมอยู่ในคลิปบอร์ดแล้ว', 'Info')
-})
-$btnPw.Add_Click({
-    # Copied, never shown: the password should not end up in a screenshot.
-    try {
-        [Windows.Forms.Clipboard]::SetText(((Get-Content $PasswordFile -Raw).Trim()))
-        $tray.ShowBalloonTip(3000, 'คัดลอกแล้ว', 'รหัสผ่านอยู่ในคลิปบอร์ดแล้ว — วางในหน้าเว็บบนมือถือได้เลย', 'Info')
-    } catch {
-        [Windows.Forms.MessageBox]::Show('อ่านไฟล์รหัสผ่านไม่ได้: ' + $PasswordFile, 'ROYS Event', 'OK', 'Warning') | Out-Null
-    }
 })
 $btnLog.Add_Click({ if (Test-Path $LogFile) { Start-Process notepad.exe $LogFile } })
 
@@ -500,6 +496,7 @@ $timer.Add_Tick({
     $script:wasLive = $live
     $script:micMuted = [bool]($st -and $st.micMuted)
     $script:onStandby = [bool]($st -and $st.scene -eq 'พักรอ')
+    $script:onPhoneCam = [bool]($st -and $st.rig -eq 'phone')
 
     if (-not $fresh) {
         $lblLive.Text = 'ยังไม่ทราบสถานะ'
@@ -534,8 +531,11 @@ $timer.Add_Tick({
     $btnMic.ForeColor = if ($script:micMuted) { $cAmber } else { $cText }
     $btnScene.Text = if ($script:onStandby) { 'กลับไปที่กล้อง' } else { 'ภาพพักรอ' }
     $btnScene.ForeColor = if ($script:onStandby) { $cAmber } else { $cText }
+    $btnCam.Text = if ($script:onPhoneCam) { 'กลับไปใช้กล้อง USB' } else { 'ใช้กล้องมือถือ' }
+    $btnCam.ForeColor = if ($script:onPhoneCam) { $cAmber } else { $cText }
     $btnMic.Enabled = [bool]($st -and $st.obs -and $st.obs.connected)
     $btnScene.Enabled = $btnMic.Enabled
+    $btnCam.Enabled = $btnMic.Enabled
 
     # mic meter: peak dB since the agent's last look, -60 dB .. 0 dB
     $db = if ($st -and $st.micDb -ne $null) { [double]$st.micDb } else { -100 }

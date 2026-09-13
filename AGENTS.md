@@ -246,6 +246,19 @@ OBS --RTMP--> ffmpeg on the hotel PC --HLS over HTTPS PUT--> steam-hotel-event w
       | 2s | ~6s | 3,600 | ~23 | 1.2 h |
 
       (A viewer costs `7200 / hls_time` requests an hour — one segment plus one playlist poll per segment period — against the 85,000 budget.) This is the owner's call to make per event, not a default to change.
+    - **Sized for this hotel on 2026-09-14: 5 TVs, and the owner wants 12 hours a day.** Those two pull against each other, and the arithmetic settles it. Count *everything*: 5 viewers plus the ffmpeg upload is `6 × 7200/T` an hour, plus the agent's own poll.
+
+      | `hls_time` | TV waits | req/hour | hours/day at 85,000 |
+      |---|---|---|---|
+      | 2s | ~6s | 21,840 | 3.9 |
+      | 3s | ~9s | 14,640 | 5.8 |
+      | 4s | ~12s | 11,040 | 7.7 |
+      | **6s (current)** | ~18s | **7,440** | **11.4** |
+      | 8s | ~24s | 5,640 | 15.1 |
+
+      **6s is already the fastest setting that gets anywhere near 12 hours**, so "make it faster" and "12 hours a day" cannot both be satisfied — going to 3s would cap the day at under 6 hours. Left at 6s deliberately.
+    - **The agent's own poll was costing more than the arithmetic suggested.** It ran at `FAST_POLL_S` (4s) whenever the channel was streaming, even with nobody on the control page — 900 requests an hour, 10,800 over a 12-hour day, asking a question whose answer was always "nothing". Streaming now maps to `STREAM_POLL_S` (15s), and `viewerActive` still forces 4s the moment someone opens the page, so button presses land quickly. Worth ~0.9 extra hours a day: 10.5 → 11.4.
+    - **If 12 hours is genuinely 5 TVs streaming continuously**, 6s needs `DAILY_BUDGET` raised from 85,000 to about 90,000 (12.1 hours). The account cap is 100,000/day shared with the other proxies, so that spends half the deliberate safety margin — and overrunning it takes **every** channel down until 07:00, not just channel 21. Do not do it without asking. If the requirement is only that the channel be *available* 12 hours, nothing needs changing: an idle live channel with no viewers costs just the upload, around 1,440 requests an hour.
     - **Free thing to try first:** the M3U IPTV app's own buffer/decoder setting. A client-side buffer is invisible from here and costs nothing to shrink. As of 2026-09-14 the owner is trying this before spending any quota.
 - **The quota is the real constraint.** The Free plan's 100,000 Worker requests/day are per *account*, shared with the 3HD / Amarin / Pluto proxies (which use well under 100/day as of 2026-09-13). A viewer costs ~1,200 requests/hour, so the worker caps itself at `DAILY_BUDGET` = 85,000/day: once spent, it serves an `#EXT-X-ENDLIST` playlist, which makes players *stop polling* (rejecting requests wouldn't help — a rejected request still counts). The event goes off air until 07:00 Bangkok (00:00 UTC reset), but the rest of the lineup survives. Rough capacity: ~70 viewer-hours a day, e.g. 20 TVs for 3.5 hours. Check `/status` → `requestsToday` during an event.
 - Durable Object limits that shaped the code: rows are capped at 2 MB (a 6s segment at 2.5 Mbps is ~1.9 MB, so segments are split into 1 MB rows); 100,000 rows written/day (the request counter lives in memory and is flushed every 200 requests or on each playlist upload, rather than written per request).
