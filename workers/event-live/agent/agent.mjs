@@ -405,9 +405,16 @@ async function collectStatus() {
       // Whether the camera is actually delivering frames, which is what the
       // owner needs to know — a source can exist and still show black (the USB
       // camera does exactly that when something else holds it open).
+      // The signal is the source's own size: a capture that is not delivering
+      // reports 0x0. `GetSourceActive` is no good here — it stays true for a
+      // dead device, because it only means "this source is in the live scene".
       try {
-        const { videoActive } = await obs.request("GetSourceActive", { sourceName: CAMERA_INPUT });
-        status.camera = { name: CAMERA_INPUT, active: !!videoActive };
+        const { sceneItems } = await obs.request("GetSceneItemList", { sceneName: CAMERA_SCENE });
+        const item = sceneItems.find((i) => i.sourceName === CAMERA_INPUT);
+        const t = item?.sceneItemTransform;
+        status.camera = item
+          ? { name: CAMERA_INPUT, active: !!t && t.sourceWidth > 0, width: t?.sourceWidth ?? 0, height: t?.sourceHeight ?? 0 }
+          : null;
       } catch {
         status.camera = null; // this scene collection has no USB camera source
       }

@@ -247,6 +247,86 @@ function Stop-Agent {
     $script:agent = $null
 }
 
+# ------------------------------------------------------------ the watchman ----
+#
+# The things that actually ruin a broadcast are silent: a camera that went
+# black, a mic left muted, segments no longer reaching Cloudflare, the channel
+# left on air for hours after everyone went home. The program sees all of that
+# every second anyway, so it raises the alarm itself — no polling of the worker,
+# no waiting for a scheduled check, and it works with the internet down.
+
+$script:alerts = @{}          # key -> when it last fired
+$script:blackSince = $null
+$script:ingestSince = $null
+$script:mutedSince = $null
+$script:quietSince = $null
+$script:staleSince = $null
+$script:liveSince = $null
+
+function Alert([string]$key, [string]$title, [string]$text, [int]$cooldownSeconds = 300) {
+    $now = Get-Date
+    if ($script:alerts.ContainsKey($key) -and ($now - $script:alerts[$key]).TotalSeconds -lt $cooldownSeconds) { return }
+    $script:alerts[$key] = $now
+    try { $tray.ShowBalloonTip(8000, $title, $text, 'Warning') } catch {}
+    try {
+        [IO.File]::AppendAllText($LogFile, ("[{0}] เตือน: {1} — {2}`r`n" -f $now.ToString('HH:mm:ss'), $title, $text), (New-Object Text.UTF8Encoding($false)))
+    } catch {}
+    $script:lastAlert = "$title — $text"
+    $script:lastAlertAt = $now
+}
+
+# Returns how long a condition has been true, given the timestamp field that
+# tracks it; $null while the condition is false.
+function Track([string]$field, [bool]$condition) {
+    $now = Get-Date
+    if (-not $condition) { Set-Variable -Name $field -Scope Script -Value $null; return 0 }
+    $since = Get-Variable -Name $field -Scope Script -ValueOnly -ErrorAction SilentlyContinue
+    if (-not $since) { Set-Variable -Name $field -Scope Script -Value $now; return 0 }
+    return [int]($now - $since).TotalSeconds
+}
+
+function Watch-Broadcast($st, $ch, $live, $fresh, [bool]$online) {
+    # The laptop stopped reporting — only worth shouting about mid-broadcast.
+    $staleFor = Track 'staleSince' (-not $fresh)
+    if ($staleFor -gt 60 -and $script:wasLive) {
+        Alert 'stale' 'ตัวควบคุมเงียบ' 'โปรแกรมไม่ได้รับสถานะจากตัวควบคุมเกิน 1 นาที ทั้งที่กำลังออกอากาศ' 600
+    }
+    if (-not $fresh -or -not $st) { return }
+
+    # Black on air: the camera is not delivering and the standby card is not up.
+    $blackFor = Track 'blackSince' ($live -and $st.camera -and -not $st.camera.active -and -not $script:onStandby)
+    if ($blackFor -gt 20) {
+        Alert 'black' 'ภาพดำกำลังออกอากาศ!' 'กล้องไม่ส่งภาพ — เช็กสาย USB หรือกดภาพพักรอไว้ก่อน' 120
+    }
+
+    # Mic left muted. Muting on purpose is normal, forgetting is not.
+    $mutedFor = Track 'mutedSince' ($live -and $st.micMuted -eq $true)
+    if ($mutedFor -gt 90) { Alert 'muted' 'ไมค์ปิดอยู่' 'ออกอากาศโดยไม่มีเสียงมา 1 นาทีครึ่งแล้ว' 300 }
+
+    # Mic on, but nothing is reaching it.
+    $quietFor = Track 'quietSince' ($live -and -not $st.micMuted -and $st.micDb -ne $null -and $st.micDb -lt -55)
+    if ($quietFor -gt 120) { Alert 'quiet' 'เสียงเงียบผิดปกติ' 'ไมค์เปิดอยู่แต่ไม่มีเสียงเข้ามา 2 นาทีแล้ว' 600 }
+
+    # OBS says it is streaming, but nothing is arriving at Cloudflare. Give it
+    # time: right after "start" the first segment legitimately takes a few
+    # seconds to reach the worker, and alerting at 3s cried wolf once already.
+    $ingestFor = Track 'ingestSince' ($st.streaming -and $ch -and -not $ch.live -and $online)
+    if ($ingestFor -gt 45) {
+        Alert 'ingest' 'สัญญาณไม่ถึงเซิร์ฟเวอร์' 'OBS ส่งอยู่ แต่ช่อง 21 ไม่มีภาพออกมา 45 วินาทีแล้ว — เน็ตอาจหลุด' 180
+    }
+
+    # Left on air. This is the expensive mistake: it burns the daily budget.
+    $liveFor = Track 'liveSince' $live
+    if ($liveFor -gt 10800) { Alert 'long' 'ออกอากาศมา 3 ชั่วโมงแล้ว' 'ถ้างานจบแล้วอย่าลืมกดหยุดถ่ายทอดสด — โควตาเดินอยู่ตลอด' 3600 }
+
+    # Budget. 70% is still comfortable, 90% means the evening is at risk.
+    if ($ch -and $ch.dailyBudget -gt 0) {
+        $pct = 100 * $ch.requestsToday / $ch.dailyBudget
+        if ($pct -ge 90) { Alert 'quota90' 'โควตาวันนี้ใกล้หมด' ("ใช้ไปแล้ว {0:N0}% — ถ้าหมดช่อง 21 จะออกอากาศไม่ได้จนถึง 7 โมงเช้า" -f $pct) 1800 }
+        elseif ($pct -ge 70) { Alert 'quota70' 'โควตาวันนี้เกิน 70%' ("ใช้ไปแล้ว {0:N0}% ของวันนี้" -f $pct) 3600 }
+    }
+}
+
 function Send-Command([string]$action, [string]$from = 'ปุ่ม') {
     try {
         # Logged next to the agent's own lines: a broadcast must never start
@@ -480,7 +560,7 @@ $timer.Add_Tick({
     # legitimately "not showing" while the standby card is up, so that case is
     # not an error.
     if ($st -and $st.camera) {
-        if ($st.camera.active) { Set-Row 'camo' 'กล้อง USB · ส่งภาพอยู่' $cGreen }
+        if ($st.camera.active) { Set-Row 'camo' ('กล้อง USB · ส่งภาพ ' + $(if ($st.camera.width) { [string]$st.camera.width + 'pกว้าง' } else { 'อยู่' })) $cGreen }
         elseif ($script:onStandby) { Set-Row 'camo' 'กล้อง USB · พร้อม (ขึ้นภาพพักรออยู่)' $cMuted }
         elseif (-not $live) { Set-Row 'camo' 'กล้อง USB · พร้อม' $cMuted }
         else { Set-Row 'camo' 'กล้อง USB ไม่ส่งภาพ!' $cRed }
@@ -507,8 +587,13 @@ $timer.Add_Tick({
         if ($reportedAt -gt $script:pendingSince.AddSeconds(2) -or $waited -gt 25) { $script:pendingAction = $null }
     }
 
+    # The watchman runs off the same tick — it sees every second, so it catches
+    # a black picture or a muted mic long before a person would.
+    Watch-Broadcast $st $ch $live $fresh ([bool]($data -and $data.online))
+
     $msg = ''
-    if ($st -and $st.lastError) { $msg = $st.lastError }
+    if ($script:lastAlertAt -and ((Get-Date) - $script:lastAlertAt).TotalSeconds -lt 60) { $msg = '⚠ ' + $script:lastAlert }
+    elseif ($st -and $st.lastError) { $msg = $st.lastError }
     elseif ($st -and $st.reconnecting) { $msg = 'OBS กำลังเชื่อมต่อใหม่…' }
     elseif ($script:pendingAction) { $msg = 'กำลังสั่งงาน…' }
     elseif ($live -and $st -and $st.camera -and -not $st.camera.active -and -not $script:onStandby) { $msg = 'กล้องไม่ส่งภาพ — ภาพที่ออกอากาศเป็นจอดำ (เช็กสาย USB / ปิด Camo Studio)' }
