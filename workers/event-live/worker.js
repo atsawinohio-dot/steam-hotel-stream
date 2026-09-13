@@ -14,6 +14,9 @@
 // #EXT-X-ENDLIST, which makes HLS players stop polling — the event goes off
 // air for the day, but the rest of the lineup keeps working.
 
+import { Control } from "./control.js";
+import controlPage from "./control.html";
+
 const DAILY_BUDGET = 85_000;
 // A playlist not refreshed for this long means the broadcast stopped without a
 // clean ENDLIST (ffmpeg crashed, PC lost network); report it as not live.
@@ -54,13 +57,23 @@ export default {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
     if (url.pathname === "/") {
-      return text("Steam Hotel channel 21 (Event). Playback: /live/index.m3u8  Status: /status");
+      return text("Steam Hotel channel 21 (Event). Playback: /live/index.m3u8  Status: /status  Control: /control");
     }
+
+    const path = url.pathname;
+    if (path === "/control") {
+      return new Response(controlPage, {
+        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+    const stub = env.EVENT.get(env.EVENT.idFromName("channel-21"));
+    // The control API does its own auth (session cookie for the phone, the
+    // ingest token for the laptop agent) inside the Durable Object.
+    if (path.startsWith("/control/")) return stub.fetch(request);
 
     const isWrite = ["PUT", "POST", "DELETE"].includes(request.method);
     if (isWrite && !authorized(request, env)) return text("Unauthorized", 401);
 
-    const path = url.pathname;
     const known =
       path === "/status" ||
       path === "/live/" ||
@@ -68,7 +81,6 @@ export default {
       (path.startsWith("/live/") && SEG_RE.test(path.slice(6)));
     if (!known) return text("Not found", 404);
 
-    const stub = env.EVENT.get(env.EVENT.idFromName("channel-21"));
     return stub.fetch(request);
   },
 };
@@ -90,6 +102,7 @@ export class EventChannel {
     this.day = row?.day ?? "";
     this.used = row?.used ?? 0;
     this.flushedUsed = this.used;
+    this.control = new Control(this.sql, env);
   }
 
   // Counted in memory and flushed every 200 requests (or on the next playlist
@@ -135,16 +148,19 @@ export class EventChannel {
     const path = new URL(request.url).pathname;
     const method = request.method;
 
+    const status = () => ({
+      live: this.live(now),
+      lastIngestSecondsAgo: this.lastIngest ? Math.round((now - this.lastIngest) / 1000) : null,
+      requestsToday: this.used,
+      dailyBudget: DAILY_BUDGET,
+      offAirForBudget: this.overBudget(),
+    });
+
+    if (path.startsWith("/control/")) return this.control.handle(request, now, status());
+
     if (path === "/status") {
-      const status = {
-        live: this.live(now),
-        lastIngestSecondsAgo: this.lastIngest ? Math.round((now - this.lastIngest) / 1000) : null,
-        requestsToday: this.used,
-        dailyBudget: DAILY_BUDGET,
-        offAirForBudget: this.overBudget(),
-      };
-      return new Response(JSON.stringify(status), {
-        headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "no-store" },
+      return new Response(JSON.stringify(status()), {
+        headers: { ...CORS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
       });
     }
 

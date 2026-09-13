@@ -8,9 +8,15 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-07-29._
+_No agent currently mid-task. Last updated by: Claude (Claude Code) — 2026-09-13._
 
 ## Last completed
+
+- **Channel 21 remote control: deployed, tested end to end, documented (2026-09-13).** The owner can now run an event from their phone: `https://steam-hotel-event.tiny-hall-8718.workers.dev/control` (password in `E:\Steam Hotel\event-control-password.txt` on the hotel laptop; the same value is the worker secret `CONTROL_PASSWORD`). Start/stop, mic mute, a standby card, a preview frame and a mic meter. Full design notes in `AGENTS.md` § Channel 21 → "Remote control from a phone".
+  - Measured on the real setup: start from cold (OBS closed) → channel live in ~25s; standby/camera and mute/unmute within ~5s; stop → off air in ~6s; preview image and mic meter both arriving.
+  - The laptop agent (`workers/event-live/agent/agent.mjs`) is a plain `node` process started by `E:\Steam Hotel\ROYS Event Control.bat`. It dies with whatever launched it — during this session it was killed along with the previous Claude session's shell, and nothing restarted it. Launch it from a window the owner owns, or detached (`Invoke-CimMethod Win32_Process Create`), and check `agentSecondsAgo` before blaming the worker.
+  - **Still unverified: the audio level with real speech.** A quiet room measures `mean_volume -37.5 dB` on the channel. `workers/event-live/check-audio.ps1` does the measurement — run it while someone talks near the phone; speech should land around -30..-20 dB mean. Tune the "เพิ่มเสียง +20 dB" filter on the mic input in OBS.
+  - **Watch the camera, not just the status flags.** During this test Camo reported "connected" while the phone was actually sending its grey "no camera" placeholder (phone locked / app in the background), and that is what channel 21 broadcast. The `/control` page's preview frame is the way to catch it.
 
 - **Lego Channel: reverted 1080p → 720p, at owner's request ("ปรับให้เหมาะสม แต่ยังโหลด เร็ว คมชัด") (2026-07-29) — resolves the tradeoff flagged in the pass below.** Re-measured both rungs on the same CloudFront host: 1080p (`index/1.m3u8`) ratio ~0.41-0.47, 720p (`index/2.m3u8`) ratio ~0.29-0.33 — a real, consistent ~25-30% speed gain from stepping down one rung, unlike every other channel where 1080p already loads fast. Pinned to `index/2.m3u8`. Every other channel's current pin already balances fast+sharp with no tradeoff (ratio <0.15 even at their pinned resolution), so nothing else changed.
   - **Not yet confirmed by the owner on the real hotel setup.**

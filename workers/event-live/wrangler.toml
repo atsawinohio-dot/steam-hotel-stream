@@ -13,5 +13,14 @@ class_name = "EventChannel"
 tag = "v1"
 new_sqlite_classes = ["EventChannel"]
 
+# control.html is bundled into the worker as a string (served at /control).
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+# CONTROL_PASSWORD is a secret too: it is what the owner types on the control
+# page, and it also signs the page's session cookie. setup-control.ps1 sets it.
+
 # INGEST_TOKEN is a secret: set it with setup-token.ps1, which also writes the
 # same value to a file outside the repo for start-event.ps1 to read.
