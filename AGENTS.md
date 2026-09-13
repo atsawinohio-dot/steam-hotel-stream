@@ -109,6 +109,24 @@ A static playlist can only loop a *finite* number of times before `#EXT-X-ENDLIS
 - Only the manifest goes through the worker; segment URIs are absolute GitHub Pages URLs (Pages already sends `Access-Control-Allow-Origin: *`), so video bandwidth is player→Pages and never touches Cloudflare — same split as the Pluto shim.
 - `promo/playlist.m3u8` (static, 24h then stops) is left in the repo as a fallback if the worker ever needs to be bypassed.
 
+### Channel 21 "Event" — live broadcasts from the hotel (Workers Free only)
+
+Added 2026-09-13 for the hotel's STEM events. The owner explicitly wanted Cloudflare **with no paid subscription** — Cloudflare Stream has no free tier, and R2 requires adding a subscription (a $0 plan, but the owner declined it). So everything runs on the Workers Free plan, with video held in a SQLite-backed Durable Object.
+
+```
+OBS --RTMP--> ffmpeg on the hotel PC --HLS over HTTPS PUT--> steam-hotel-event worker --> Durable Object (SQLite)
+                                                                         ^
+                                     TVs / phones anywhere --GET---------+
+```
+
+- Source: `workers/event-live/`. Deployed as `steam-hotel-event.tiny-hall-8718.workers.dev`; channel URL `.../live/index.m3u8`; health/usage at `.../status`.
+- **Starting a broadcast:** double-click `E:\Steam Hotel\Start Event Live.bat` (outside the repo), which runs `start-event.ps1`: ffmpeg listens on `rtmp://127.0.0.1:1935/live` (localhost only, so no Windows Firewall prompt), copies OBS's stream into 6s segments without re-encoding, and uploads them. OBS settings: Stream → Custom, server `rtmp://127.0.0.1:1935/live`, key `event`; Output → keyframe interval **2s**, bitrate ~**2500 Kbps**, 720p. `start-event.ps1 -Test` loops `Steam Hotel.mp4` instead, to test the chain without a camera.
+- **Off air:** the playlist 404s ("Not live") whenever nothing has been uploaded for 30s, so outside events channel 21 shows the player's "not available" message. That is normal — the daily health check treats it as such.
+- **Upload auth:** a bearer token. `setup-token.ps1` generates it, stores it as the worker secret `INGEST_TOKEN`, and writes the same value to `E:\Steam Hotel\event-ingest-token.txt` (outside the repo). Re-run it to rotate. It feeds wrangler through cmd's `<`, not a PowerShell pipe — Windows PowerShell appends CRLF to piped input, wrangler keeps the `` in the secret, and every upload then 401s.
+- **The quota is the real constraint.** The Free plan's 100,000 Worker requests/day are per *account*, shared with the 3HD / Amarin / Pluto proxies (which use well under 100/day as of 2026-09-13). A viewer costs ~1,200 requests/hour, so the worker caps itself at `DAILY_BUDGET` = 85,000/day: once spent, it serves an `#EXT-X-ENDLIST` playlist, which makes players *stop polling* (rejecting requests wouldn't help — a rejected request still counts). The event goes off air until 07:00 Bangkok (00:00 UTC reset), but the rest of the lineup survives. Rough capacity: ~70 viewer-hours a day, e.g. 20 TVs for 3.5 hours. Check `/status` → `requestsToday` during an event.
+- Durable Object limits that shaped the code: rows are capped at 2 MB (a 6s segment at 2.5 Mbps is ~1.9 MB, so segments are split into 1 MB rows); 100,000 rows written/day (the request counter lives in memory and is flushed every 200 requests or on each playlist upload, rather than written per request).
+- If the owner ever accepts the R2 subscription, moving segment storage to R2 with public r2.dev reads would take viewing off the Worker quota entirely.
+
 ## Editing `iptv.m3u8`
 
 Each channel is two lines:

@@ -1,0 +1,17 @@
+name = "steam-hotel-event"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# Everything lives in one SQLite-backed Durable Object — the only storage on
+# the Workers Free plan that can take a few-MB write every few seconds (KV
+# allows 1,000 writes/day; R2 needs a subscription).
+[[durable_objects.bindings]]
+name = "EVENT"
+class_name = "EventChannel"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EventChannel"]
+
+# INGEST_TOKEN is a secret: set it with setup-token.ps1, which also writes the
+# same value to a file outside the repo for start-event.ps1 to read.
