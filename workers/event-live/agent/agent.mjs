@@ -17,6 +17,7 @@ import {
   appendFileSync, writeFileSync, existsSync, unlinkSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const BASE = "https://steam-hotel-event.tiny-hall-8718.workers.dev";
@@ -26,6 +27,10 @@ const OBS_PROFILE = "ROYS Event";
 const OBS_COLLECTION = "ROYS Event";
 const CAMERA_SCENE = "Event";
 const STANDBY_SCENE = "พักรอ";
+// The standby card the hotel asked for: their own logo, full frame. Kept in the
+// repo next to the agent so a fresh clone has it.
+const STANDBY_INPUT = "โลโก้พักรอ";
+const STANDBY_IMAGE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "standby.png");
 const MIC_INPUT = "ไมค์มือถือ (Camo)";
 const RTMP_IN = "rtmp://127.0.0.1:1935/live/event";
 const OBS_WS_CONFIG = path.join(process.env.APPDATA, "obs-studio", "plugin_config", "obs-websocket", "config.json");
@@ -195,27 +200,50 @@ async function ensureObs({ launch }) {
 }
 
 // The standby card is built through the API rather than by editing the scene
-// file, so it can't collide with whatever someone last saved in OBS.
+// file, so it can't collide with whatever someone last saved in OBS. It is the
+// hotel's logo on a full frame (standby.png next to this script) — the owner
+// picked that over the wording the first version showed.
 async function ensureStandbyScene() {
   const { scenes } = await obs.request("GetSceneList");
-  if (scenes.some((s) => s.sceneName === STANDBY_SCENE)) return;
-  log("สร้างฉาก “พักรอ” ใน OBS");
-  await obs.request("CreateScene", { sceneName: STANDBY_SCENE });
-  await obs.request("CreateInput", {
-    sceneName: STANDBY_SCENE, inputName: "พื้นหลังพักรอ", inputKind: "color_source_v3",
-    inputSettings: { color: 0xff33200b, width: 1920, height: 1080 }, // ABGR: deep navy
-  });
-  const { sceneItemId } = await obs.request("CreateInput", {
-    sceneName: STANDBY_SCENE, inputName: "ข้อความพักรอ", inputKind: "text_gdiplus_v3",
-    inputSettings: {
-      text: "ROYS Hotel\nพักสักครู่ เดี๋ยวกลับมา\nBe right back", align: "center",
-      font: { face: "Tahoma", size: 96, style: "Bold", flags: 1 }, color: 0xffffffff,
-    },
-  });
-  await obs.request("SetSceneItemTransform", {
-    sceneName: STANDBY_SCENE, sceneItemId,
-    sceneItemTransform: { alignment: 0, positionX: 960, positionY: 540 },
-  });
+  if (!scenes.some((s) => s.sceneName === STANDBY_SCENE)) {
+    log("สร้างฉาก “พักรอ” ใน OBS");
+    await obs.request("CreateScene", { sceneName: STANDBY_SCENE });
+  }
+  const { sceneItems } = await obs.request("GetSceneItemList", { sceneName: STANDBY_SCENE });
+
+  if (sceneItems.some((i) => i.sourceName === STANDBY_INPUT)) {
+    // Already there — just make sure it still points at the current file.
+    await obs.request("SetInputSettings", {
+      inputName: STANDBY_INPUT,
+      inputSettings: { file: STANDBY_IMAGE },
+    });
+  } else {
+    log("ใส่โลโก้ ROYS ในฉาก “พักรอ”");
+    const { sceneItemId } = await obs.request("CreateInput", {
+      sceneName: STANDBY_SCENE, inputName: STANDBY_INPUT, inputKind: "image_source",
+      inputSettings: { file: STANDBY_IMAGE },
+    });
+    // Fit the frame whatever the profile's canvas size is, rather than assuming 1920x1080.
+    const { baseWidth, baseHeight } = await obs.request("GetVideoSettings");
+    await obs.request("SetSceneItemTransform", {
+      sceneName: STANDBY_SCENE, sceneItemId,
+      sceneItemTransform: {
+        alignment: 5, // top-left
+        positionX: 0, positionY: 0,
+        boundsType: "OBS_BOUNDS_SCALE_INNER", boundsAlignment: 0, // centred in the bounds
+        boundsWidth: baseWidth, boundsHeight: baseHeight,
+      },
+    });
+  }
+
+  // Clear out the navy-card sources the first version of this scene used.
+  for (const old of ["พื้นหลังพักรอ", "ข้อความพักรอ"]) {
+    if (sceneItems.some((i) => i.sourceName === old)) {
+      try {
+        await obs.request("RemoveInput", { inputName: old });
+      } catch {}
+    }
+  }
 }
 
 // ------------------------------------------------------- RTMP receiver ----

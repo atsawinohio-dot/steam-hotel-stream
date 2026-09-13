@@ -247,7 +247,12 @@ function Stop-Agent {
     $script:agent = $null
 }
 
-function Send-Command([string]$action) {
+function Send-Command([string]$action, [string]$from = 'ปุ่ม') {
+    try {
+        # Logged next to the agent's own lines: a broadcast must never start
+        # without a record of what asked for it.
+        [IO.File]::AppendAllText($LogFile, ("[{0}] โปรแกรม: ส่งคำสั่ง {1} ({2})`r`n" -f (Get-Date -Format 'HH:mm:ss'), $action, $from), (New-Object Text.UTF8Encoding($false)))
+    } catch {}
     try {
         $tmp = $CommandFile + '.tmp'
         [IO.File]::WriteAllText($tmp, $action, (New-Object Text.UTF8Encoding($false)))
