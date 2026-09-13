@@ -12,7 +12,10 @@
 // fight over the RTMP port.
 
 import { spawn, execFile } from "node:child_process";
-import { readFileSync, readdirSync, statSync, openSync, readSync, closeSync } from "node:fs";
+import {
+  readFileSync, readdirSync, statSync, openSync, readSync, closeSync,
+  appendFileSync, writeFileSync, existsSync, unlinkSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
 
@@ -32,11 +35,29 @@ const CAMO_LOG_DIR = path.join(
 );
 const CAMO_APP = "shell:AppsFolder\\ReincubateLtd.CamoStudio_9bq3v28c93p4r!App";
 const VERSION = 1;
+// The desktop program (app/roys-event-control.ps1) talks to the agent through
+// three files rather than a socket: the agent appends everything it logs,
+// writes what it knows after every poll, and picks up a button press within
+// half a second. Nothing listens on a port, and the program can be closed and
+// reopened without disturbing a running broadcast.
+const LOG_FILE = "E:\\Steam Hotel\\event-control.log";
+const STATUS_FILE = "E:\\Steam Hotel\\event-agent-status.json";
+const COMMAND_FILE = "E:\\Steam Hotel\\event-agent-command.txt";
+const WATCH_FILE = "E:\\Steam Hotel\\event-agent-watch.txt";
 
 const token = readFileSync(TOKEN_FILE, "utf8").trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const stamp = () => new Date().toLocaleTimeString("th-TH", { hour12: false });
-const log = (...a) => console.log(`[${stamp()}]`, ...a);
+function log(...a) {
+  const line = `[${stamp()}] ${a.join(" ")}`;
+  console.log(line);
+  // The agent writes the log itself because it usually runs with no console
+  // at all (the program starts it hidden), and because Windows PowerShell 5.1
+  // cannot append UTF-8 without turning the Thai into mojibake.
+  try {
+    appendFileSync(LOG_FILE, line + "\r\n", "utf8");
+  } catch {}
+}
 
 function isRunning(image) {
   return new Promise((resolve) =>
@@ -128,14 +149,35 @@ class Obs {
 
 const obs = new Obs();
 
+// OBS drops a marker file while it runs and deletes it on a clean exit; a
+// leftover one makes the next launch ask "start in Safe Mode?" before it opens
+// its websocket — and that question is unanswerable here, because the agent
+// runs with no visible desktop of its own and OBS's dialog never reaches the
+// screen. Any marker left while OBS is not running is stale, so clear them.
+// (--disable-shutdown-check does not suppress this in OBS 32.2.2.)
+function clearObsCrashSentinel() {
+  const dir = path.join(process.env.APPDATA, "obs-studio", ".sentinel");
+  try {
+    for (const f of readdirSync(dir)) {
+      if (f.startsWith("run_")) unlinkSync(path.join(dir, f));
+    }
+  } catch {}
+}
+
 async function ensureObs({ launch }) {
   if (obs.connected) return true;
   let running = await isRunning("obs64.exe");
   if (!running && launch) {
     log("เปิด OBS (โปรไฟล์ ROYS Event)…");
-    spawn(path.join(OBS_DIR, "obs64.exe"), ["--profile", OBS_PROFILE, "--collection", OBS_COLLECTION, "--disable-shutdown-check"], {
-      cwd: OBS_DIR, detached: true, stdio: "ignore",
-    }).unref();
+    clearObsCrashSentinel();
+    // Through cmd's "start", not spawn directly: the desktop program runs this
+    // agent with its window hidden, Windows passes that "start hidden" down to
+    // every child, and an OBS whose window never appears sits there forever
+    // with an invisible dialog and never opens its websocket port. "start"
+    // gives the new process a normal show state again.
+    const exe = path.join(OBS_DIR, "obs64.exe");
+    const line = `start "" /D "${OBS_DIR}" "${exe}" --profile "${OBS_PROFILE}" --collection "${OBS_COLLECTION}" --disable-shutdown-check`;
+    spawn(line, { shell: true, detached: true, stdio: "ignore", windowsHide: true }).unref();
     running = true;
   }
   if (!running) return false;
@@ -247,10 +289,11 @@ function camoStatus() {
 
 // ----------------------------------------------------------- commands ----
 
+const ACTIONS_LOCAL = new Set(["start", "stop", "mute", "unmute", "standby", "camera"]);
 const ACTION_TH = { start: "เริ่มถ่ายทอดสด", stop: "หยุดถ่ายทอดสด", mute: "ปิดไมค์", unmute: "เปิดไมค์", standby: "ภาพพักรอ", camera: "กลับไปที่กล้อง" };
 
-async function run(action) {
-  log("คำสั่งจากมือถือ:", ACTION_TH[action] || action);
+async function run(action, source = "มือถือ") {
+  log(`คำสั่งจาก${source}:`, ACTION_TH[action] || action);
   if (action === "start") {
     if (!(await isRunning("CamoStudio.exe"))) {
       spawn("explorer.exe", [CAMO_APP], { detached: true, stdio: "ignore" }).unref();
@@ -322,6 +365,72 @@ async function screenshot(scene) {
   return imageData.slice(imageData.indexOf(",") + 1);
 }
 
+// ------------------------------------------------------ desktop program ----
+
+// What the worker last said about the channel, so a local refresh in between
+// polls can repeat it instead of spending a request to ask again.
+let lastChannel = null;
+let lastOnline = null;
+
+function writeStatusFile(status, channel, online) {
+  if (channel !== undefined) lastChannel = channel;
+  if (online !== undefined) lastOnline = online;
+  try {
+    writeFileSync(
+      STATUS_FILE,
+      JSON.stringify({ at: Date.now(), online: lastOnline, channel: lastChannel, status }),
+      "utf8"
+    );
+  } catch {}
+}
+
+// True while the program's window is open: it touches this file every few
+// seconds. Only then is it worth re-reading OBS between server polls — that
+// keeps the mic meter live without spending any of the daily request budget.
+function programWatching() {
+  try {
+    return Date.now() - statSync(WATCH_FILE).mtimeMs < 15_000;
+  } catch {
+    return false;
+  }
+}
+
+function takeLocalCommand() {
+  try {
+    if (!existsSync(COMMAND_FILE)) return null;
+    const action = readFileSync(COMMAND_FILE, "utf8").trim();
+    unlinkSync(COMMAND_FILE);
+    return ACTIONS_LOCAL.has(action) ? action : null;
+  } catch {
+    return null;
+  }
+}
+
+// Wait for the next server poll, but check the program’s button file twice a
+// second — a button pressed on the laptop should not wait out a 30s poll.
+async function waitForNextPoll(seconds) {
+  const until = Date.now() + seconds * 1000;
+  let refreshed = 0;
+  while (Date.now() < until) {
+    await sleep(500);
+    const action = takeLocalCommand();
+    if (action) {
+      try {
+        await run(action, "โปรแกรม");
+        lastError = null;
+      } catch (e) {
+        lastError = `${ACTION_TH[action] || action} ไม่สำเร็จ: ${e.message}`;
+        log(lastError);
+      }
+      return; // report the new state to the control page right away
+    }
+    if (Date.now() - refreshed > 2000 && programWatching()) {
+      refreshed = Date.now();
+      writeStatusFile(await collectStatus());
+    }
+  }
+}
+
 // ---------------------------------------------------------------- loop ----
 
 async function main() {
@@ -330,10 +439,11 @@ async function main() {
   let acked = [];
   let wantPreview = false;
   let online = null;
+  let status = null;
   for (;;) {
     let next = 30;
     try {
-      const status = await collectStatus();
+      status = await collectStatus();
       const body = { status, acked };
       if (wantPreview && obs.connected && status.scene) {
         body.preview = await screenshot(status.scene).catch(() => undefined);
@@ -347,6 +457,7 @@ async function main() {
       const reply = await res.json();
       if (online !== true) log("เชื่อมกับหน้าควบคุมแล้ว");
       online = true;
+      writeStatusFile(status, reply.channel, true);
       acked = [];
       wantPreview = reply.wantPreview;
       next = reply.pollSeconds || 30;
@@ -364,9 +475,12 @@ async function main() {
     } catch (e) {
       if (online !== false) log("ติดต่อหน้าควบคุมไม่ได้:", e.message);
       online = false;
+      // The program still needs to show OBS and the mic while Cloudflare is
+      // unreachable — a broadcast that is already running keeps running.
+      writeStatusFile(status, null, false);
       next = 10;
     }
-    await sleep(next * 1000);
+    await waitForNextPoll(next);
   }
 }
 

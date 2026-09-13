@@ -107,7 +107,7 @@ export class Control {
     const path = new URL(request.url).pathname;
     const method = request.method;
 
-    if (path === "/control/agent" && method === "POST") return this.agentPoll(request, now);
+    if (path === "/control/agent" && method === "POST") return this.agentPoll(request, now, channel);
 
     if (path === "/control/api/login" && method === "POST") {
       this.fails = this.fails.filter((t) => now - t < LOGIN_WINDOW_MS);
@@ -161,7 +161,7 @@ export class Control {
     return json({ error: "not found" }, 404);
   }
 
-  async agentPoll(request, now) {
+  async agentPoll(request, now, channel) {
     const got = request.headers.get("Authorization") || "";
     if (!this.env.INGEST_TOKEN || !safeEqual(got, `Bearer ${this.env.INGEST_TOKEN}`)) {
       return json({ error: "unauthorized" }, 401);
@@ -188,6 +188,10 @@ export class Control {
       commands: this.commands.map((c) => ({ id: c.id, action: c.action })),
       pollSeconds: busy ? FAST_POLL_S : SLOW_POLL_S,
       wantPreview: viewerActive,
+      // Sent back so the desktop program on the laptop can show whether the
+      // channel is actually on air, and how much of today's budget is left,
+      // without spending a request of its own on /status.
+      channel,
     });
   }
 }
