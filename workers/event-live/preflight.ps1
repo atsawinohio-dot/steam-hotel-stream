@@ -53,7 +53,9 @@ elseif ($cam -and $cam.Present) { $warnings += "ไม่พบไมค์ '$Mi
 # --- ค่าที่ล็อกในกล้อง: ตัวเลขถูกไม่พอ ต้องเป็น manual ด้วย --------------------
 if ($cam -and $cam.Present) {
     $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $Settings 2>&1
-    $want = @{ WhiteBalance = 5100; Gain = 96 }
+    # ค่าอ้างอิง = ชุดแสงกลางวันในออฟฟิศ (2026-09-14) ตรงกับตารางใน CLAUDE.md
+    # ถ้าย้ายกล้องกลับเข้าห้องมืดแล้วจูนใหม่ ให้แก้ตัวเลขตรงนี้ตามไปด้วย
+    $want = @{ WhiteBalance = 5100; Gain = 32 }
     foreach ($name in 'WhiteBalance', 'Gain') {
         $line = $out | Where-Object { $_ -match "^$name\s" } | Select-Object -First 1
         if (-not $line) { $warnings += "อ่านค่า $name จากกล้องไม่ได้"; continue }
