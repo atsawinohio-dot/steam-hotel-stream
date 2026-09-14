@@ -38,6 +38,9 @@ const TARGET_YAVG = num("--target", 155);
 const MAX_YHIGH = num("--max-high", 225);
 // เพดาน noise ขั้นต่ำ (ความต่างเฉลี่ยระหว่างสองเฟรมติดกัน) ถ้าภาพเดิมเงียบมากก็ยังยอมให้ถึงค่านี้ได้
 const MAX_NOISE = num("--max-noise", 2.0);
+// เพดานจุดสีที่เต้นแรงที่สุดระหว่างสองเฟรม (ปื้นสีในเงามืด) — 40 มาจากการวัดจริง
+// บนฉากออฟฟิศ 2026-09-14 ซึ่งตาเริ่มเห็นปื้นตอนค่านี้แตะ ~56
+const MAX_CHROMA_PEAK = num("--max-chroma", 40);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const say = (...a) => console.log(a.join(" "));
@@ -140,13 +143,21 @@ function frameDiff(a, b) {
     execFile(
       "ffmpeg",
       ["-hide_banner", "-nostats", "-v", "info", "-i", a, "-i", b,
-       "-filter_complex", "blend=all_mode=difference,signalstats,metadata=print", "-f", "null", "-"],
+       "-filter_complex", "blend=all_mode=difference,format=yuv420p,signalstats,metadata=print", "-f", "null", "-"],
       { windowsHide: true, maxBuffer: 1 << 24 },
       (err, stdout, stderr) => {
         const out = `${stdout}\n${stderr}`;
-        const m = out.match(/lavfi\.signalstats\.YAVG=([\d.]+)/);
-        if (!m) return reject(new Error("วัด noise ไม่ได้"));
-        resolve(Number(m[1]));
+        const g = (k) => {
+          const m = out.match(new RegExp(`lavfi\\.signalstats\\.${k}=([\\d.]+)`));
+          return m ? Number(m[1]) : null;
+        };
+        const luma = g("YAVG");
+        if (luma === null) return reject(new Error("วัด noise ไม่ได้"));
+        // จุดสีที่เต้นแรงที่สุดในเฟรม — ตัวนี้คือตัวที่ฟ้องปื้นสีในเงามืด ซึ่ง
+        // ค่าเฉลี่ยจับไม่ทัน วัดจริง 2026-09-14 บนฉากออฟฟิศ: gamma 0 / 0.6 / 1.2 / 1.8
+        // ให้จุดสีแรงสุด 23 / 27 / 56 / 77 (ตาเห็นปื้นตั้งแต่ 1.2) ขณะที่ค่าเฉลี่ย
+        // ขยับแค่ 1.7 → 2.2 → 2.7 → 3.6 ซึ่งแยกไม่ออก
+        resolve({ luma, chromaPeak: Math.max(g("UMAX") ?? 0, g("VMAX") ?? 0) });
       }
     );
   });
@@ -156,12 +167,13 @@ async function measure(obs, withNoise = true) {
   const file = await grabShot(obs);
   const stats = await ffprobeStats(file);
   let noise = null;
+  let chromaPeak = null;
   if (withNoise) {
     await sleep(250);
     const second = await grabShot(obs);
-    noise = await frameDiff(file, second);
+    ({ luma: noise, chromaPeak } = await frameDiff(file, second));
   }
-  return { file, noise, ...stats };
+  return { file, noise, chromaPeak, ...stats };
 }
 
 // -------------------------------------------------------------- ไล่หาค่า ----
@@ -182,9 +194,11 @@ async function findGammaCeiling(obs, base, noiseLimit, satLimit) {
     const m = await measure(obs);
     const noisy = m.noise > noiseLimit;
     const blotchy = m.SATMAX > satLimit;
-    const why = noisy ? "  << noise เกิน" : blotchy ? "  << สีเพี้ยนเกิน" : "";
-    say(`   ตรวจที่ gamma ${g.toFixed(1)}  ->  noise ${m.noise.toFixed(2)}/${noiseLimit.toFixed(2)}  สีจัดสุด ${m.SATMAX.toFixed(0)}/${satLimit.toFixed(0)}  YAVG ${m.YAVG.toFixed(1)}${why}`);
-    if (noisy || blotchy) break;
+    // ปื้นสีในเงามืดโผล่ก่อนที่ค่าอื่นจะฟ้อง — ดูตัวอย่างตัวเลขใน frameDiff
+    const speckled = m.chromaPeak > MAX_CHROMA_PEAK;
+    const why = noisy ? "  << noise เกิน" : speckled ? "  << จุดสีในเงามืดเกิน" : blotchy ? "  << สีเพี้ยนเกิน" : "";
+    say(`   ตรวจที่ gamma ${g.toFixed(1)}  ->  noise ${m.noise.toFixed(2)}/${noiseLimit.toFixed(2)}  จุดสี ${m.chromaPeak.toFixed(0)}/${MAX_CHROMA_PEAK}  สีจัดสุด ${m.SATMAX.toFixed(0)}/${satLimit.toFixed(0)}  YAVG ${m.YAVG.toFixed(1)}${why}`);
+    if (noisy || blotchy || speckled) break;
     ceiling = g;
   }
   return ceiling;
