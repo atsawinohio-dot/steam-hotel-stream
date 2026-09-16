@@ -8,17 +8,11 @@ A single-page IPTV web app for ROYS Hotel: fullscreen live-TV player with a slid
 
 Live site: https://atsawinohio-dot.github.io/steam-hotel-stream/
 
-## Open work (2026-09-13)
+## Open work (2026-09-16)
 
-The full, machine-specific handoff (status table, workspace layout on the hotel laptop, where secrets live, gotchas) is in `E:\Steam Hotel\CLAUDE.md` on the hotel laptop — Claude Code loads it automatically when opened anywhere under that folder. Summary for anyone working from a fresh clone:
+The full, machine-specific handoff (status table, workspace layout on the hotel laptop, where secrets live, gotchas) is in `E:\Steam Hotel\CLAUDE.md` on the hotel laptop — Claude Code loads it automatically when opened anywhere under that folder.
 
-1. **Decide whether 16 fps is acceptable.** The picture is tuned as of 2026-09-13 23:15 (`YAVG 116`), but only because exposure went to −4, which halves the frame rate to 16. Ask the owner: smooth motion or a visible picture. `camera-settings.ps1 -Exposure -5` returns 30 fps and needs `tune-image.mjs --apply` re-run afterwards. More light removes the choice entirely.
-2. **Verify channel 21 audio with real speech — still never done.** Run `workers/event-live/test-mic.ps1` (or `Test Mic.bat`) while someone talks near the camera — it needs no broadcast and no quota. A room with nobody speaking says nothing about speech levels, so the script refuses to grade a clip with no speech in it. Note the mixer fader on `ไมค์กล้อง USB` is back at 0 dB (it was at −13.4 dB earlier the same evening, cancelling most of the +10 dB filter), so the chain currently nets the documented +10 dB — correct level problems at the gain filter, not the fader.
-3. The owner still needs to disable the laptop's built-in webcam in Device Manager (it wedges every camera when opened).
-4. **Light the room the camera points at.** Still the ceiling on picture quality, and not a software problem. At the unlit desk corner (`YAVG 8/255`) no filter value worked at all — maxing gamma only produced full-frame colour speckle. The lit curtain it faces now tops out at `YAVG 116` against a 155 target.
-5. **`roys-ch21-live-guard` has logged nothing since 20:02 on 2026-09-13** although it is an hourly task, and it missed a real broadcast between 23:02 and 23:14. Check the scheduled task.
-
-The channel 21 remote control (item 1 of the previous round) is **done and tested end to end** on 2026-09-13 — see "Remote control from a phone" below.
+**No open work on the main 20-channel lineup right now.** Channel 21 "Event" — the source of every item that used to be listed here (frame rate vs. brightness trade-off, unverified mic levels, room lighting, the hourly guard bot) — was **decommissioned by the owner on 2026-09-16** (worker deleted, bot disabled; see the "Channel 21" section below and `HANDOFF.md`). None of those items are actionable anymore since there's no channel for them to apply to. If the owner ever asks to rebuild channel 21, re-read that section before doing anything — the trade-offs and gotchas it documents still apply once a camera and a worker exist again.
 
 ## Multi-agent handoff protocol
 
@@ -121,9 +115,13 @@ A static playlist can only loop a *finite* number of times before `#EXT-X-ENDLIS
 - Only the manifest goes through the worker; segment URIs are absolute GitHub Pages URLs (Pages already sends `Access-Control-Allow-Origin: *`), so video bandwidth is player→Pages and never touches Cloudflare — same split as the Pluto shim.
 - `promo/playlist.m3u8` (static, 24h then stops) is left in the repo as a fallback if the worker ever needs to be bypassed.
 
-### Channel 21 "Event" — live broadcasts from the hotel (Workers Free only)
+### Channel 21 "Event" — live broadcasts from the hotel (decommissioned 2026-09-16)
 
-Added 2026-09-13 for the hotel's STEM events. The owner explicitly wanted Cloudflare **with no paid subscription** — Cloudflare Stream has no free tier, and R2 requires adding a subscription (a $0 plan, but the owner declined it). So everything runs on the Workers Free plan, with video held in a SQLite-backed Durable Object.
+**Shut down for good at the owner's request (2026-09-16), in two steps: first dropped from `iptv.m3u8` that morning, then "ปิดไปเลย ไม่ใช้แล้ว" (shut it down, not using it anymore) that evening, confirmed a second time with "ลบออก" (delete it).** Unlike the ROYS PROMO section above, **the worker is actually gone, not just idle** — `steam-hotel-event` and its Durable Object were deleted with `wrangler delete` (`/status` now 404s), so every URL and API call described below is dead. The `roys-ch21-live-guard` scheduled task is disabled (SKILL.md still on disk). The desktop shortcut and the old `event-ingest-token.txt`/`event-control-password.txt` secret files were also deleted; `E:\Steam Hotel\Steam Hotel.mp4` (the test clip referenced below) and `old-claude-scripts\` are gone too. Full account of what was deleted vs. disabled vs. left alone: `HANDOFF.md`, entry dated 2026-09-16.
+
+**Everything below is left as-is, unedited, as build notes for whoever redeploys this from scratch** — the source in `workers/event-live/` is untouched, so re-deploying (`wrangler deploy`) and setting fresh secrets (the old `INGEST_TOKEN`/`CONTROL_PASSWORD` are gone with the worker) would bring it back close to where it left off. Don't trust any URL, request count, or "currently running" claim below without re-verifying — this whole section describes a system that no longer exists on Cloudflare.
+
+Added 2026-09-13 for the hotel's STEM events. The owner explicitly wanted Cloudflare **with no paid subscription** — Cloudflare Stream has no free tier, and R2 requires adding a subscription (a $0 plan, but the owner declined it). So everything ran on the Workers Free plan, with video held in a SQLite-backed Durable Object.
 
 ```
 OBS --RTMP--> ffmpeg on the hotel PC --HLS over HTTPS PUT--> steam-hotel-event worker --> Durable Object (SQLite)
