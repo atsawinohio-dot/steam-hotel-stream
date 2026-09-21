@@ -39,3 +39,5 @@ https://sportsgrid-samsungus.amagi.tv/playlist1080pl.m3u8
 https://amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv/playlist/amg01329-otterainc-toongoggles-samsungau/playlist.m3u8
 #EXTINF:-1 tvg-id="LegoChannel.us" tvg-logo="https://i.imgur.com/xePwW13.png" group-title="Kids",Lego Channel
 https://dltiqboxjw21d.cloudfront.net/index/2.m3u8
+#EXTINF:-1 tvg-id="AsianGames2026" tvg-logo="https://i.imgur.com/CwalZjr.png" group-title="Sports",Asian Games 2026
+https://steam-hotel-asiangames.tiny-hall-8718.workers.dev/live.m3u8

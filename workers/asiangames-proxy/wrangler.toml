@@ -1,0 +1,7 @@
+name = "steam-hotel-asiangames"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "ASIANGAMES_STATE"
+id = "a51f2769a29a43d5a77b895055bc09a0"
