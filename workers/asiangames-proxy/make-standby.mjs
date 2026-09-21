@@ -145,7 +145,12 @@ const lines = [
   "#EXT-X-MEDIA-SEQUENCE:0",
   "#EXT-X-PLAYLIST-TYPE:VOD",
 ];
+// Every repeat is the same file, so its timestamps restart each time. Without
+// a discontinuity marker the player sees time jump backwards and stalls on a
+// spinner after the first loop — the ROYS HOTEL channel's playlist marks its
+// repeats the same way.
 for (let i = 0; i < repeats; i++) {
+  if (i > 0) lines.push("#EXT-X-DISCONTINUITY");
   lines.push(`#EXTINF:${SEG_SECONDS}.000000,`);
   lines.push("standby0.ts");
 }
