@@ -102,7 +102,7 @@ chain.push(
 );
 chain.push(
   drawtext({
-    text: `ตารางถ่ายทอดสดทีมชาติไทย · ${schedule.date}`,
+    text: `ตารางถ่ายทอดสดเอเชียนเกมส์ · ${schedule.date}`,
     x: "(w-text_w)/2",
     y: 540,
     size: 38,
