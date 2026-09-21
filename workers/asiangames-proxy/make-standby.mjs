@@ -50,17 +50,19 @@ function drawtext({ text, x, y, size, color = "white", font = FONT }) {
 const filters = [];
 // Emblem, centred near the top, on a light panel — the emblem's own
 // "Aichi-Nagoya 2026" wordmark is dark and disappears against the navy.
-filters.push("[0:v]drawbox=x=812:y=40:w=296:h=360:color=white@0.94:t=fill[panel]");
-filters.push("[1:v]scale=-1:300[logo]");
-filters.push("[panel][logo]overlay=(W-w)/2:70[bg]");
+filters.push("[0:v]drawbox=x=826:y=30:w=268:h=286:color=white@0.94:t=fill[panel]");
+filters.push("[1:v]scale=-1:250[logo]");
+filters.push("[panel][logo]overlay=(W-w)/2:48[bg]");
 
+// Panel ends at y=316; everything below is laid out from there so the title
+// never rides up under the emblem.
 let chain = [];
-chain.push(drawtext({ text: "ASIAN GAMES 2026", x: "(w-text_w)/2", y: 400, size: 76 }));
+chain.push(drawtext({ text: "ASIAN GAMES 2026", x: "(w-text_w)/2", y: 356, size: 72 }));
 chain.push(
   drawtext({
     text: "ไม่มีการถ่ายทอดสดขณะนี้",
     x: "(w-text_w)/2",
-    y: 500,
+    y: 458,
     size: 46,
     color: "0xFFD166",
   })
@@ -69,25 +71,25 @@ chain.push(
   drawtext({
     text: `ตารางถ่ายทอดสดทีมชาติไทย · ${schedule.date}`,
     x: "(w-text_w)/2",
-    y: 585,
+    y: 540,
     size: 38,
     color: "0xBBC7D9",
   })
 );
 
-let y = 665;
+let y = 624;
 for (const [time, event, channel] of schedule.rows) {
   chain.push(drawtext({ text: time, x: 420, y, size: 40, color: "0x7FD1FF" }));
   chain.push(drawtext({ text: event, x: 560, y, size: 40 }));
   chain.push(drawtext({ text: channel, x: 1360, y, size: 36, color: "0xBBC7D9" }));
-  y += 62;
+  y += 60;
 }
 
 chain.push(
   drawtext({
     text: "ช่องจะสลับไปยังผู้ถ่ายทอดโดยอัตโนมัติเมื่อถึงเวลาแข่ง",
     x: "(w-text_w)/2",
-    y: 1000,
+    y: 1006,
     size: 32,
     color: "0x8FA3BF",
   })
