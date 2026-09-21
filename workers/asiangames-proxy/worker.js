@@ -31,6 +31,10 @@ const DEFAULT_TARGET =
   "https://steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8";
 const DEFAULT_LABEL = "PPTV HD 36 (default - official Asian Games broadcaster)";
 
+// Reached over the PPTV_PROXY service binding rather than a plain fetch —
+// see the note in wrangler.toml.
+const PPTV_PROXY_HOST = "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev";
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS, POST",
@@ -97,9 +101,64 @@ export default {
       );
     }
 
+    // Serves the manifest body rather than 302-ing to it. The hotel's Samsung
+    // TV failed with PLAYER_ERROR_CONNECTION_FAILED on the redirect form
+    // (2026-09-21), and the channels that do work on that TV are all plain
+    // manifest URLs, so the redirect is the one thing this channel had that
+    // they don't. Relative URIs are resolved against the upstream's final URL
+    // (after its own redirects) — resolving against the requested URL instead
+    // is the exact bug documented in ../pluto-proxy/worker.js.
     if (url.pathname === "/live.m3u8") {
       const target = (await env.ASIANGAMES_STATE.get(KV_KEY)) || DEFAULT_TARGET;
-      return Response.redirect(target, 302);
+      try {
+        const viaBinding =
+          new URL(target).hostname === PPTV_PROXY_HOST && env.PPTV_PROXY;
+        const res = viaBinding
+          ? await env.PPTV_PROXY.fetch(target, { redirect: "follow" })
+          : await fetch(target, { redirect: "follow" });
+        if (!res.ok) {
+          return new Response(`Upstream ${res.status}`, {
+            status: 502,
+            headers: CORS_HEADERS,
+          });
+        }
+        const body = await res.text();
+        const baseUrl = res.url || target;
+        const rewritten = body
+          .split("\n")
+          .map((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return line;
+            if (trimmed.startsWith("#")) {
+              return line.replace(/URI="([^"]+)"/g, (m, ref) => {
+                try {
+                  return `URI="${new URL(ref, baseUrl).toString()}"`;
+                } catch (e) {
+                  return m;
+                }
+              });
+            }
+            try {
+              return new URL(trimmed, baseUrl).toString();
+            } catch (e) {
+              return line;
+            }
+          })
+          .join("\n");
+        return new Response(rewritten, {
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/vnd.apple.mpegurl",
+            // Upstream manifests carry expiring tokens and a live segment window.
+            "Cache-Control": "no-store",
+          },
+        });
+      } catch (err) {
+        return new Response(`Proxy error: ${err.message}`, {
+          status: 502,
+          headers: CORS_HEADERS,
+        });
+      }
     }
 
     return new Response("Not found", { status: 404, headers: CORS_HEADERS });
