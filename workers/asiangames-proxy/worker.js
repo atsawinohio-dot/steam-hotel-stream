@@ -33,13 +33,18 @@ const SOURCES = {
   pptv: "https://steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8",
   mcot: "https://mcothd-streaming-edge-cdn.mcot.net/tencentmcot/smil:tencentmcot.smil/playlist.m3u8",
   nbt: "https://cdn-edge.iiptvcdn.com/live_event/smil:f180-054a-38d7-ce66-f7cf.smil/playlist.m3u8",
+  thairath:
+    "https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8",
   standby: STANDBY,
 };
 
 // Reached over the PPTV_PROXY service binding rather than a plain fetch — a
 // subrequest to another Worker on this account's workers.dev subdomain routes
 // back into this Worker and hits its catch-all 404. See wrangler.toml.
-const PPTV_PROXY_HOST = "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev";
+const BINDINGS = {
+  "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev": "PPTV_PROXY",
+  "steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev": "THAIRATH_PROXY",
+};
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -114,10 +119,9 @@ async function readOverride(env) {
 }
 
 async function fetchUpstream(target, env) {
-  const viaBinding =
-    new URL(target).hostname === PPTV_PROXY_HOST && env.PPTV_PROXY;
-  return viaBinding
-    ? env.PPTV_PROXY.fetch(target, { redirect: "follow" })
+  const binding = BINDINGS[new URL(target).hostname];
+  return binding && env[binding]
+    ? env[binding].fetch(target, { redirect: "follow" })
     : fetch(target, { redirect: "follow" });
 }
 

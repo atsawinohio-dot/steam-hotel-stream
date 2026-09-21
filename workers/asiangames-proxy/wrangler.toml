@@ -12,3 +12,7 @@ id = "a51f2769a29a43d5a77b895055bc09a0"
 [[services]]
 binding = "PPTV_PROXY"
 service = "steam-hotel-pptv-proxy"
+
+[[services]]
+binding = "THAIRATH_PROXY"
+service = "steam-hotel-thairath-proxy"
