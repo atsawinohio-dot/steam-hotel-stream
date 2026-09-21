@@ -1,0 +1,27 @@
+name = "steam-hotel-status"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# Every 30 minutes. Cron triggers are free on the Workers Free plan.
+[triggers]
+crons = ["*/30 * * * *"]
+
+[[kv_namespaces]]
+binding = "STATUS"
+id = "bcb73a5957d04b0082ec044bf3c85419"
+
+# A plain fetch() to another Worker on this account's workers.dev subdomain
+# comes back 404 (it routes back into the caller). Our own proxy channels are
+# reached through these bindings instead. Add one here for any new proxy
+# channel added to iptv.m3u8.
+[[services]]
+binding = "CH3_PROXY"
+service = "steam-hotel-ch3-proxy"
+
+[[services]]
+binding = "AMARIN_PROXY"
+service = "steam-hotel-amarin-proxy"
+
+[[services]]
+binding = "PLUTO_PROXY"
+service = "steam-hotel-pluto-proxy"
