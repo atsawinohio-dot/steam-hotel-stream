@@ -15,6 +15,13 @@ const TIMEOUT_MS = 20_000;
 const RETRIES = 2;
 const RETRY_DELAY_MS = 10_000;
 
+// Channels whose origin answers 403 to anyone outside Thailand. GitHub's
+// runners are abroad, so a 403 here says nothing about the hotel's TVs
+// (verified 2026-09-21: CH7 HD 403 from GitHub, 200 from the hotel laptop).
+// Only 403 is excused — a 404, 5xx or timeout on these still counts as down.
+// The laptop bot (inside Thailand) is what checks these properly.
+const GEO_BLOCKED = new Set(["CH7 HD"]);
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function get(url) {
@@ -88,15 +95,23 @@ if (channels.length === 0) {
 }
 
 const results = await Promise.all(
-  channels.map(async (ch) => ({ ...ch, err: await check(ch) }))
+  channels.map(async (ch) => {
+    const err = await check(ch);
+    const geo = GEO_BLOCKED.has(ch.name) && /\b403\b/.test(err || "");
+    return { ...ch, err: geo ? null : err, geo };
+  })
 );
 const down = results.filter((r) => r.err);
+const geo = results.filter((r) => r.geo);
 const stamp = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" }).slice(0, 16);
 
-for (const r of results) console.log(`${r.err ? "DOWN" : "ok  "}  ${r.name}${r.err ? ` — ${r.err}` : ""}`);
+const tag = (r) => (r.err ? "DOWN" : r.geo ? "geo " : "ok  ");
+const note = (r) => (r.err ? ` — ${r.err}` : r.geo ? " — 403 from abroad (geo-blocked, not checked)" : "");
+for (const r of results) console.log(`${tag(r)}  ${r.name}${note(r)}`);
+const geoNote = geo.length ? ` (${geo.map((r) => r.name).join(", ")} geo-blocked from abroad)` : "";
 const summary = down.length
-  ? `${stamp} DOWN ${down.length}/${channels.length} — ${down.map((r) => `${r.name} (${r.err})`).join(", ")}`
-  : `${stamp} OK ${channels.length}/${channels.length}`;
+  ? `${stamp} DOWN ${down.length}/${channels.length} — ${down.map((r) => `${r.name} (${r.err})`).join(", ")}${geoNote}`
+  : `${stamp} OK ${channels.length}/${channels.length}${geoNote}`;
 console.log(`\n${summary}`);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
@@ -104,7 +119,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(
     process.env.GITHUB_STEP_SUMMARY,
     `### ${down.length ? "⚠️ มีช่องล่ม" : "✅ ทุกช่องปกติ"}\n\n\`${summary}\`\n\n` +
-      results.map((r) => `- ${r.err ? "❌" : "✅"} ${r.name}${r.err ? ` — ${r.err}` : ""}`).join("\n") +
+      results.map((r) => `- ${r.err ? "❌" : r.geo ? "🌏" : "✅"} ${r.name}${note(r)}`).join("\n") +
       "\n"
   );
 }
