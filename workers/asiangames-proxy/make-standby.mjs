@@ -48,10 +48,30 @@ function drawtext({ text, x, y, size, color = "white", font = FONT }) {
 }
 
 const filters = [];
+
+// Backdrop built from the emblem's own palette — the purple and gold of the
+// Aichi-Nagoya mark over deep navy — rather than an official key visual,
+// which is someone else's artwork. Diagonal gradient, the emblem again as a
+// large faint watermark, and a gold rule under the header.
+// `gradients` is a source filter — it generates its own frame and must not be
+// given an input pad.
+filters.push(
+  "gradients=s=1920x1080:c0=0x241357:c1=0x08131F:x0=0:y0=0:x1=1920:y1=1080:nb_colors=2,format=rgba[grad]"
+);
+// Oversized, barely-there emblem bleeding off the right edge.
+// Positioned so the twin swooshes fall in the right third and the red sun and
+// wordmark sit off-canvas — a partial sun reads as a screen defect on a TV.
+filters.push("[1:v]scale=-1:1650,format=rgba,colorchannelmixer=aa=0.09[ghost]");
+filters.push("[grad][ghost]overlay=1120:-330[washed]");
+// Gold rule, echoing the emblem's gold stroke.
+filters.push(
+  "[washed]drawbox=x=660:y=598:w=600:h=3:color=0xC9A227@0.85:t=fill[ruled]"
+);
+
 // Emblem, centred near the top, on a light panel — the emblem's own
 // "Aichi-Nagoya 2026" wordmark is dark and disappears against the navy.
-filters.push("[0:v]drawbox=x=826:y=30:w=268:h=286:color=white@0.94:t=fill[panel]");
-filters.push("[1:v]scale=-1:250[logo]");
+filters.push("[ruled]drawbox=x=826:y=30:w=268:h=286:color=white@0.94:t=fill[panel]");
+filters.push("[0:v]scale=-1:250[logo]");
 filters.push("[panel][logo]overlay=(W-w)/2:48[bg]");
 
 // Panel ends at y=316; everything below is laid out from there so the title
@@ -110,7 +130,7 @@ execFileSync(
   "ffmpeg",
   [
     "-y",
-    "-f", "lavfi", "-i", "color=c=0x0B1A2E:s=1920x1080",
+    "-i", LOGO,
     "-i", LOGO,
     "-filter_complex_script", graphPath,
     "-map", "[out]",
