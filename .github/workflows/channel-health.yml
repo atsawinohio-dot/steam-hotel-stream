@@ -1,0 +1,26 @@
+name: Channel health check
+
+# Runs on GitHub's servers, so it works while the hotel laptop is off.
+# A failed run = at least one channel down; GitHub emails the account owner.
+on:
+  schedule:
+    # 08:10 and 18:10 Bangkok (UTC+7). GitHub cron is UTC and can start a few
+    # minutes late under load.
+    - cron: "10 1,11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node .github/scripts/check-channels.mjs
