@@ -6,11 +6,24 @@
 // broadcaster's unrelated regular programming is confusing. This is what it
 // shows instead.
 //
-// The schedule changes daily, so the picker task regenerates this each morning
-// and commits the result. Usage:
-//   node make-standby.mjs schedule.json
-// where schedule.json is { "date": "21 ก.ย. 69", "rows": [["14:00","วอลเลย์บอลหญิง ไทย-จีน","PPTV HD 36"], ...] }
-// Omit the argument to rebuild from the committed schedule.json.
+// The picker task plans the day each morning, writes schedule.json, and runs
+// this to redraw the card. Usage:
+//   node make-standby.mjs [schedule.json]
+//
+// schedule.json is the day's running order for channel 21:
+//   {
+//     "date": "21 ก.ย. 69",
+//     "blocks": [
+//       { "start": "14:00", "end": "16:00",
+//         "event": "วอลเลย์บอลหญิง รอบรองฯ ไทย-จีน",
+//         "channel": "PPTV HD 36", "source": "pptv" }
+//     ]
+//   }
+//
+// `source` is which feed channel 21 switches to: pptv | mcot | nbt, or
+// "unavailable" when the broadcaster carrying it has no working link. An
+// unavailable block is still drawn — its channel name is shown in amber so a
+// guest knows to tune to that channel on the TV itself.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -98,16 +111,31 @@ chain.push(
 );
 
 let y = 624;
-for (const [time, event, channel] of schedule.rows) {
-  chain.push(drawtext({ text: time, x: 420, y, size: 40, color: "0x7FD1FF" }));
-  chain.push(drawtext({ text: event, x: 560, y, size: 40 }));
-  chain.push(drawtext({ text: channel, x: 1360, y, size: 36, color: "0xBBC7D9" }));
+for (const block of schedule.blocks) {
+  const unavailable = block.source === "unavailable";
+  chain.push(drawtext({ text: block.start, x: 420, y, size: 40, color: "0x7FD1FF" }));
+  chain.push(drawtext({ text: block.event, x: 560, y, size: 40 }));
+  // Amber marks a block channel 21 can't carry — the guest has to tune to that
+  // channel themselves, so the name has to stand out rather than blend in.
+  chain.push(
+    drawtext({
+      text: unavailable ? `${block.channel} *` : block.channel,
+      x: 1360,
+      y,
+      size: 36,
+      color: unavailable ? "0xFFD166" : "0xBBC7D9",
+    })
+  );
   y += 60;
 }
 
+const anyUnavailable = schedule.blocks.some((b) => b.source === "unavailable");
+
 chain.push(
   drawtext({
-    text: "ช่องจะสลับไปยังผู้ถ่ายทอดโดยอัตโนมัติเมื่อถึงเวลาแข่ง",
+    text: anyUnavailable
+      ? "ช่องจะสลับไปยังผู้ถ่ายทอดโดยอัตโนมัติเมื่อถึงเวลาแข่ง · * = ต้องเปิดดูที่ช่องนั้นเอง"
+      : "ช่องจะสลับไปยังผู้ถ่ายทอดโดยอัตโนมัติเมื่อถึงเวลาแข่ง",
     x: "(w-text_w)/2",
     y: 1006,
     size: 32,
