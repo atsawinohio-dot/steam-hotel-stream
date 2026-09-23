@@ -8,9 +8,16 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-16._
+_No agent currently mid-task. Last updated by: Claude (Opus 5.5, Claude Code) — 2026-09-23._
 
 ## Last completed
+
+- **Channel 1 (ROYS HOTEL) video replaced with the owner's new promo (2026-09-23, `266f2af`).** Source: `C:\Users\promp\Downloads\ROYS HOTEL\ROYS HOTEL.mp4` (3840x2160 25fps, 100.96 s, 49 Mbps, 622 MB). Owner's brief: same sharpness, smaller file.
+  - Picked the quality by measuring, not guessing: encoded the two hardest scenes (pool sparkle + grain at 50–62 s, thin "Step Inside / and the city softens" text at 4–12 s) at CRF 18/20/22/24 against a near-lossless 1080p reference. Pool: 16.2 / 10.9 / 7.4 / 5.1 Mbps at SSIM 0.984 / 0.980 / 0.977 / 0.973. The CRF 22 text crop was indistinguishable from the reference at 1:1, so CRF 21 was chosen as a margin.
+  - Final: `scale=1920:1080:flags=lanczos`, libx264 CRF 21 preset slow, High@4.1, `-maxrate 12M -bufsize 24M` (never above the old file's ~12 Mbps average), 2 s GOP with forced keyframes, `-c:a copy` (AAC 48k stereo, untouched: mean −18.2 dB before and after), `-hls_time 4`. Result: 26 segments, 85 MB, ~7 Mbps average; full-clip SSIM vs the 4K source 0.981.
+  - Kept 25 fps from the source (the old encode was padded to 30). `playlist.m3u8` keeps the old shape: 372 loops × 100.96 s = 10.43 h, `#EXT-X-DISCONTINUITY` between loops, `#EXT-X-ENDLIST`.
+  - `segment_025.ts` is only 19 KB — **that's correct**, it's the final ~1 s fade to black (YAVG 17 flat, audio tailing off to −47 dB). Don't "fix" it.
+  - Verified on Pages: new playlist live ~75 s after push, 9,672 entries / 10.43 h, segments 000/012/025 all 200.
 
 - **Channel 21 "Event" decommissioned entirely, at the owner's request (2026-09-16, two-stage).** Morning: owner asked to drop it from the lineup, chose the lightest option — removed the two `iptv.m3u8` lines (`309a041`), left everything else running. Evening: owner escalated to "ปิดไปเลย ไม่ใช้แล้ว" (shut it down, not using it anymore), then confirmed again with a plain "ลบออก" (delete it).
   - **Deleted for real:** the Cloudflare Worker `steam-hotel-event` and its Durable Object, via `wrangler delete` — confirmed gone (`/status` now 404s). All quota/session state that lived in the DO's SQLite is gone with it, unrecoverable. First delete attempt was **auto-blocked by Claude Code's own irreversible-deletion classifier**; it went through on a second explicit "ลบออก" from the owner in chat — worth knowing if a future agent hits the same wall on a genuinely-authorized deletion, the fix is asking the owner to re-confirm in plain words, not trying to route around the block.

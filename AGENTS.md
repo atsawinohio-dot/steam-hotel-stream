@@ -29,7 +29,7 @@ This project gets worked on by more than one AI tool (Claude Code, ChatGPT Codex
 index.html          Everything: markup, CSS, and JS in one file. This is the whole app.
 iptv.m3u8            Channel list (M3U8 playlist format: #EXTINF + logo/group metadata + stream URL per channel).
 playlist.m3u8         HLS playlist for the hotel's own looping welcome video (ROYS HOTEL channel).
-segment_*.ts          The 5 video segments that playlist.m3u8 loops through (~10.4h loop via repeated refs + EXT-X-DISCONTINUITY).
+segment_*.ts          The 26 video segments (100.96s, 1080p25, ~7 Mbps) that playlist.m3u8 loops through (372 loops = ~10.4h via repeated refs + EXT-X-DISCONTINUITY). Replaced 2026-09-23 — see HANDOFF.md for the encode settings.
 promo/segment_*.ts    The 6 segments (4.000s each, exactly 24s total) of the hotel's signage reel (ROYS PROMO channel).
 promo/playlist.m3u8   Static 24h VOD loop of those segments. NOT what the channel points at — kept as a fallback;
                       the live channel URL is workers/promo-loop, which loops forever (see below).
