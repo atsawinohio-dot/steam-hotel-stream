@@ -18,10 +18,12 @@ const BINDINGS = {
   "steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev": "MCOT_PROXY",
 };
 
-// Origins that answer 403 outside Thailand. Where a cron run lands is up to
-// Cloudflare, so a 403 from these is shown as "can't check from here", not
-// as down. Only 403 is excused.
-const GEO_BLOCKED = new Set(["CH7 HD"]);
+// Origins that geo-block outside Thailand (CH7 answers 403, Thai PBS 451).
+// Where a cron run lands is up to Cloudflare, so those two statuses from
+// these channels are shown as "can't check from here", not as down. Any
+// other failure on them still counts.
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS"]);
+const GEO_STATUS = /\b(403|451)\b/;
 
 // Free plan: 50 subrequests per invocation. Budget below that, leaving room
 // for the playlist fetch and retries of failures.
@@ -103,7 +105,7 @@ async function runCheck(env, source) {
 
   const out = results.map((r) => {
     if (r.err === "__budget") return { name: r.name, state: "skip" };
-    if (r.err && GEO_BLOCKED.has(r.name) && /\b403\b/.test(r.err)) return { name: r.name, state: "geo" };
+    if (r.err && GEO_BLOCKED.has(r.name) && GEO_STATUS.test(r.err)) return { name: r.name, state: "geo" };
     return r.err ? { name: r.name, state: "down", err: r.err } : { name: r.name, state: "ok" };
   });
 

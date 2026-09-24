@@ -15,12 +15,14 @@ const TIMEOUT_MS = 20_000;
 const RETRIES = 2;
 const RETRY_DELAY_MS = 10_000;
 
-// Channels whose origin answers 403 to anyone outside Thailand. GitHub's
-// runners are abroad, so a 403 here says nothing about the hotel's TVs
-// (verified 2026-09-21: CH7 HD 403 from GitHub, 200 from the hotel laptop).
-// Only 403 is excused — a 404, 5xx or timeout on these still counts as down.
-// The laptop bot (inside Thailand) is what checks these properly.
-const GEO_BLOCKED = new Set(["CH7 HD"]);
+// Channels whose origin geo-blocks anyone outside Thailand. GitHub's runners
+// are abroad, so these statuses say nothing about the hotel's TVs (verified
+// 2026-09-21: CH7 HD 403 from GitHub, 200 from the hotel laptop; 2026-09-25:
+// Thai PBS 451 from Cloudflare's checker, 200 from the laptop). Only 403/451
+// are excused — a 404, 5xx or timeout on these still counts as down. The
+// laptop bot (inside Thailand) is what checks these properly.
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS"]);
+const GEO_STATUS = /\b(403|451)\b/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -97,7 +99,7 @@ if (channels.length === 0) {
 const results = await Promise.all(
   channels.map(async (ch) => {
     const err = await check(ch);
-    const geo = GEO_BLOCKED.has(ch.name) && /\b403\b/.test(err || "");
+    const geo = GEO_BLOCKED.has(ch.name) && GEO_STATUS.test(err || "");
     return { ...ch, err: geo ? null : err, geo };
   })
 );
