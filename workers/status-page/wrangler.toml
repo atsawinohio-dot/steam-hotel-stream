@@ -25,3 +25,7 @@ service = "steam-hotel-amarin-proxy"
 [[services]]
 binding = "PLUTO_PROXY"
 service = "steam-hotel-pluto-proxy"
+
+[[services]]
+binding = "MCOT_PROXY"
+service = "steam-hotel-mcot-proxy"

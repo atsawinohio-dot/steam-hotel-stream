@@ -15,6 +15,7 @@ const BINDINGS = {
   "steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev": "CH3_PROXY",
   "steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev": "AMARIN_PROXY",
   "steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev": "PLUTO_PROXY",
+  "steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev": "MCOT_PROXY",
 };
 
 // Origins that answer 403 outside Thailand. Where a cron run lands is up to
