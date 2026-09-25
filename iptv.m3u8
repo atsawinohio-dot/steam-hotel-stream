@@ -35,22 +35,6 @@ https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_6660.m3u8
 https://bein-xtra-bein.amagi.tv/playlistR1080p.m3u8
 #EXTINF:-1 tvg-id="SportsGrid.us" tvg-logo="https://i.imgur.com/ulGKX30.png" group-title="Sports",SportsGrid
 https://sportsgrid-samsungus.amagi.tv/playlist1080pl.m3u8
-#EXTINF:-1 tvg-id="FIFAPlus.uk" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/FIFA%2B_(2025).svg/960px-FIFA%2B_(2025).svg.png" group-title="Sports",FIFA+
-https://a62dad94.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0ZJRkFQbHVzRW5nbGlzaF9ITFM/playlist.m3u8
-#EXTINF:-1 tvg-id="FIFAPlusWomen.uk" tvg-logo="https://i.ibb.co/LhpwRm8V/GB3800009-F0-20251028-T010335-SQUARE.png" group-title="Sports",FIFA+ Women
-https://cffda8ff.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/U2Ftc3VuZy1nYl9GSUZBUGx1c3dvbWVuX0hMUw/playlist.m3u8
-#EXTINF:-1 tvg-id="RealMadridTVEnglish.es" tvg-logo="https://i.imgur.com/5pMo7dL.png" group-title="Sports",Real Madrid TV
-https://rmtv.akamaized.net/hls/live/2043154/rmtv-en-web/bitrate_3.m3u8
-#EXTINF:-1 tvg-id="InterTV.it" tvg-logo="https://i.imgur.com/FUTqh2L.png" group-title="Sports",Inter TV
-https://d3k8wzt41aflvx.cloudfront.net/INTERTV/Live.m3u8
-#EXTINF:-1 tvg-id="FuboSportsNetwork.us" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Fubo_Sports_Network_2023_Logo.webp/960px-Fubo_Sports_Network_2023_Logo.webp.png" group-title="Sports",Fubo Sports Network
-https://aegis-cloudfront-1.tubi.video/c2ac89da-5c69-439e-b85d-d87de0548b54/5.m3u8
-#EXTINF:-1 tvg-id="Stadium.us" tvg-logo="https://i.imgur.com/SnZOiER.png" group-title="Sports",Stadium
-https://aegis-cloudfront-1.tubi.video/74681dcc-e6d0-4add-ad67-a22ad9c152e6/playlist.m3u8
-#EXTINF:-1 tvg-id="GloryKickboxing.us" tvg-logo="https://i.imgur.com/tS7Ub7i.png" group-title="Sports",Glory Kickboxing
-https://6f972d29.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0dsb3J5S2lja2JveGluZ19ITFM/playlist.m3u8
-#EXTINF:-1 tvg-id="PFLMMA.us" tvg-logo="https://provider-static.plex.tv/epg/cms/production/96dd0531-b500-4bd4-93ca-763cbf46defe/1500x1000_PFL_SHIELD_DARK_BG_-_Allie_Dinsmore.png" group-title="Sports",PFL MMA
-https://a883593c.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X1BGTE1NQV9ITFM/playlist.m3u8
 #EXTINF:-1 tvg-id="Toon Goggles" tvg-logo="https://upload.wikimedia.org/wikipedia/en/d/da/Toon_Goggles_logo.png" group-title="Kids",Toon Goggles
 https://amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv/playlist/amg01329-otterainc-toongoggles-samsungau/playlist.m3u8
 #EXTINF:-1 tvg-id="LegoChannel.us" tvg-logo="https://i.imgur.com/xePwW13.png" group-title="Kids",Lego Channel
