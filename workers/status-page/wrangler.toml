@@ -29,3 +29,7 @@ service = "steam-hotel-pluto-proxy"
 [[services]]
 binding = "MCOT_PROXY"
 service = "steam-hotel-mcot-proxy"
+
+[[services]]
+binding = "THAIRATH_PROXY"
+service = "steam-hotel-thairath-proxy"

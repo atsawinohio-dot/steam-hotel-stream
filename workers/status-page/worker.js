@@ -16,13 +16,21 @@ const BINDINGS = {
   "steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev": "AMARIN_PROXY",
   "steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev": "PLUTO_PROXY",
   "steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev": "MCOT_PROXY",
+  "steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev": "THAIRATH_PROXY",
 };
 
-// Origins that geo-block outside Thailand (CH7 answers 403, Thai PBS 451).
-// Where a cron run lands is up to Cloudflare, so those two statuses from
-// these channels are shown as "can't check from here", not as down. Any
-// other failure on them still counts.
-const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS"]);
+// Channels this Worker's own network can't reach, for reasons that have
+// nothing to do with whether the channel actually works on the hotel's TVs.
+// CH7 (403) and Thai PBS (451) geo-block outside Thailand — where a cron run
+// lands is up to Cloudflare, so it's a coin flip per run. ONE31 (added
+// 2026-09-26) is different: its stream lives behind Brightcove/Fastly, which
+// answers 403 to *every* Cloudflare Workers request regardless of region —
+// verified straight against the CDN root, not just this one path — while a
+// plain curl or a real TV on a normal ISP connection gets 200. No proxy can
+// fix that (see AGENTS.md § ONE31 for why one wasn't built). Either way the
+// failure is shown as "can't check from here", not as down; any other
+// failure on these channels still counts.
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "ONE31"]);
 const GEO_STATUS = /\b(403|451)\b/;
 
 // Free plan: 50 subrequests per invocation. Budget below that, leaving room
