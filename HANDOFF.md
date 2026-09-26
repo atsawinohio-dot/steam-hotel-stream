@@ -8,9 +8,17 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Opus 5.5, Claude Code) — 2026-09-23._
+_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-26._
 
 ## Last completed
+
+- **Added Thairath TV 32 and ONE31, declined Mono29 again (2026-09-26, `778cc93`).** Owner asked for all three. 20 → 22 channels. Full detail is in `E:\Steam Hotel\CLAUDE.md` (§ "เพิ่มไทยรัฐทีวี 32 และ ONE31") since that's the file this repo's process says to keep the day-to-day log in — summary here for anyone starting from this file instead:
+  - Thairath: just wired the already-deployed `steam-hotel-thairath-proxy` (built during the Asian Games work, never added to the lineup) into `iptv.m3u8`. Verified with a real frame.
+  - ONE31: old byteark URL is dead; site now runs on Brightcove Live. Found the manifest via browser network inspection (`performance.getEntriesByType('resource')`), same technique as TV5/Thairath. **Brightcove/Fastly 403s every Cloudflare Workers request** (verified against both the catalog API and the bare CDN root, with browser-like headers) while curl, a browser, and GitHub Actions all get 200 — built a Worker proxy, proved it can't work, deleted it. `iptv.m3u8` points straight at the resolved Brightcove URL instead, which means this one channel isn't self-healing like the proxied ones: if Brightcove rotates its signing key, fixing it needs the same manual browser-inspection step, not just a redeploy.
+  - Mono29: re-checked fresh rather than trusting the 2026-07 finding. Same outcome, worse presentation — the rebranded free site has no live-TV link at all now; the only "live" path redirects into `monomax.me`'s login/subscription app.
+  - Added `THAIRATH_PROXY` to `status-page`'s service bindings (its own comment says to for any new proxy channel) and added `"ONE31"` to the same geo-block exemption set CH7/Thai PBS use in `status-page/worker.js` — different root cause (Cloudflare-IP block, not geography) but identical symptom and handling.
+  - Found in passing, not investigated: Amarin TV HD answered `variant HTTP 451` from both GitHub Actions and the Cloudflare status page around the same time. Out of scope for this task; noted for whoever picks it up.
+  - Still open: the health-check bot's `SKILL.md` still says 20 channels (needs updating to 22, same as was done for the sports-channels round); neither new channel has been confirmed on an actual hotel TV yet — only curl/ffmpeg/browser from here, which this repo's own rule says isn't enough to declare it fixed.
 
 - **Channel 1 (ROYS HOTEL) video replaced with the owner's new promo (2026-09-23, `266f2af`).** Source: `C:\Users\promp\Downloads\ROYS HOTEL\ROYS HOTEL.mp4` (3840x2160 25fps, 100.96 s, 49 Mbps, 622 MB). Owner's brief: same sharpness, smaller file.
   - Picked the quality by measuring, not guessing: encoded the two hardest scenes (pool sparkle + grain at 50–62 s, thin "Step Inside / and the city softens" text at 4–12 s) at CRF 18/20/22/24 against a near-lossless 1080p reference. Pool: 16.2 / 10.9 / 7.4 / 5.1 Mbps at SSIM 0.984 / 0.980 / 0.977 / 0.973. The CRF 22 text crop was indistinguishable from the reference at 1:1, so CRF 21 was chosen as a margin.
