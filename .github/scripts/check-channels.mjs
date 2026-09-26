@@ -21,7 +21,11 @@ const RETRY_DELAY_MS = 10_000;
 // Thai PBS 451 from Cloudflare's checker, 200 from the laptop). Only 403/451
 // are excused — a 404, 5xx or timeout on these still counts as down. The
 // laptop bot (inside Thailand) is what checks these properly.
-const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS"]);
+// Amarin TV HD joins them 2026-09-26: same byteark CDN as Thai PBS, and it
+// 451s from abroad only some of the time, so it passed here at 20:46 while
+// the Cloudflare checker had flagged it at 20:01 and 20:31. From the hotel
+// laptop, inside Thailand, it answers 200 on every attempt.
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD"]);
 const GEO_STATUS = /\b(403|451)\b/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

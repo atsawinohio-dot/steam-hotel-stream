@@ -21,8 +21,10 @@ const BINDINGS = {
 
 // Channels this Worker's own network can't reach, for reasons that have
 // nothing to do with whether the channel actually works on the hotel's TVs.
-// CH7 (403) and Thai PBS (451) geo-block outside Thailand — where a cron run
-// lands is up to Cloudflare, so it's a coin flip per run. ONE31 (added
+// CH7 (403), Thai PBS and Amarin TV HD (451, both on byteark) geo-block
+// outside Thailand — where a cron run lands is up to Cloudflare, so it's a
+// coin flip per run: Amarin failed the 20:01 and 20:31 crons on 2026-09-26
+// and passed every manual check minutes later, served from Bangkok. ONE31 (added
 // 2026-09-26) is different: its stream lives behind Brightcove/Fastly, which
 // answers 403 to *every* Cloudflare Workers request regardless of region —
 // verified straight against the CDN root, not just this one path — while a
@@ -30,7 +32,7 @@ const BINDINGS = {
 // fix that (see AGENTS.md § ONE31 for why one wasn't built). Either way the
 // failure is shown as "can't check from here", not as down; any other
 // failure on these channels still counts.
-const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "ONE31"]);
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "ONE31"]);
 const GEO_STATUS = /\b(403|451)\b/;
 
 // Free plan: 50 subrequests per invocation. Budget below that, leaving room
