@@ -13,10 +13,10 @@ https://steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev/live/playlist.m3u8
 https://steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 #EXTINF:-1 tvg-id="ThaiPBS.th@SD" tvg-logo="https://i.imgur.com/CwalZjr.png" group-title="Digital TV Thai",Thai PBS
 https://thaipbs-live.cdn.byteark.com/live/playlist_1080p/index.m3u8
-#EXTINF:-1 tvg-id="ThairathTV.th" tvg-name="Thairath TV 32" group-title="Digital TV Thai" tvg-logo="https://www.thairath.co.th/assets/images/thairath_logo3.jpg",Thairath TV 32
+#EXTINF:-1 tvg-id="ThairathTV.th" tvg-name="Thairath TV 32" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/thairath-tv-32.png",Thairath TV 32
 https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
-#EXTINF:-1 tvg-id="ONE31.th" tvg-name="ONE31" group-title="Digital TV Thai" tvg-logo="https://one31.net/_nuxt/img/9298c7c.png",ONE31
-https://fastly.live.brightcove.com/6393158620112/ap-southeast-1/6415628290001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoicWN6dGF6LmVncmVzcy5wcHRpOHciLCJhY2NvdW50X2lkIjoiNjQxNTYyODI5MDAwMSIsImVobiI6ImZhc3RseS5saXZlLmJyaWdodGNvdmUuY29tIiwiaXNzIjoiYmxpdmUtcGxheWJhY2stc291cmNlLWFwaSIsInN1YiI6InBhdGhtYXB0b2tlbiIsImF1ZCI6WyI2NDE1NjI4MjkwMDAxIl0sImp0aSI6IjYzOTMxNTg2MjAxMTIifQ.Pv-kHDlJaV05HiJ2AQmS3PnV2ZQg7ovszKptAGg1EN0/playlist-hls.m3u8
+#EXTINF:-1 tvg-id="ONE31.th" tvg-name="ONE31" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/one31.png",ONE31
+https://atsawinohio-dot.github.io/steam-hotel-stream/one31.m3u8
 #EXTINF:-1 tvg-id="BBCNews.uk@NorthAmerica" tvg-logo="https://i.imgur.com/vSz2WEp.png" group-title="News",BBC News
 https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8
 #EXTINF:-1 tvg-id="AlJazeeraChannel.qa" tvg-logo="https://i.imgur.com/7bRVpnu.png" group-title="News",Al Jazeera
