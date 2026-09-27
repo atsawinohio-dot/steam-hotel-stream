@@ -33,3 +33,11 @@ service = "steam-hotel-mcot-proxy"
 [[services]]
 binding = "THAIRATH_PROXY"
 service = "steam-hotel-thairath-proxy"
+
+[[services]]
+binding = "PPTV_PROXY"
+service = "steam-hotel-pptv-proxy"
+
+[[services]]
+binding = "CH8_PROXY"
+service = "steam-hotel-ch8-proxy"

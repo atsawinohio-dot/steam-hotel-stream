@@ -1,0 +1,7 @@
+name = "steam-hotel-ch8-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "CH8_TOKEN_CACHE"
+id = "4190093b72c141739e628e35cff131a9"
