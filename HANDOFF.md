@@ -8,9 +8,11 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest = `af94cac` plus the doc commit after it); nothing is half-done._
+_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest = `5b346b8` plus the doc commit after it); nothing is half-done._
 
 ## Last completed
+
+- **Lineup trimmed to 31 (2026-09-27 ~11:45, `5b346b8`).** Owner: "ตัดตามข้อเสนอทั้ง 4 ช่อง". Removed **MyTime Movie Network, K-Content by CJ ENM, Universal Crime, NBT2 HD** (four logo files deleted; `git revert 5b346b8` restores, previous state `d8d9199`, 35 channels). Series now has one channel (Rakuten Viki). The owner had earlier chosen to KEEP Pluto TV Trending Now, SportsGrid and beIN SPORTS XTRA - do not propose cutting them again; the only open note is that Pluto and Paramount pass through the shared Workers quota (never measured). Bot `SKILL.md` expects 31 and lists the removals as intentional; `CLAUDE.md`/`AGENTS.md` say 31. Entries below that mention 35 channels or those four describe the state before this trim.
 
 - **Korean series added to Series: lineup now 35 (2026-09-27 ~11:30).** Owner asked for Korean series in the Series group. Added **Rakuten Viki** (real K-dramas, English subs burned in, AWS MediaTailor session URL - not yet tested over a long viewing) and **K-Content by CJ ENM** (CJ ENM official, 1080p, variety/entertainment rather than strict drama, has "Program will resume shortly" slates). Both pass the GitHub check (35/35) and the playback check. Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 35. Not watched on a real TV. Watch Rakuten Viki for the session expiring after hours on screen.
 
