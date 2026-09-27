@@ -37,8 +37,6 @@ https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/ch
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
 #EXTINF:-1 tvg-id="GravitasMovies.us" tvg-logo="https://i.imgur.com/H2hD4vT.png" group-title="Movies",Gravitas Movies
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
-#EXTINF:-1 tvg-id="PlutoTVTrendingNow.us" tvg-logo="https://images.pluto.tv/channels/673247127d5da5000817b4d6/colorLogoPNG.png" group-title="Movies",Pluto TV Trending Now
-https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/673247127d5da5000817b4d6.m3u8
 #EXTINF:-1 tvg-id="MovieSphere.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/moviesphere.png" group-title="Movies",MovieSphere
 https://amg00353-lionsgatefilmsi-moviesphereaus-samsungau-7qzhf.amagi.tv/playlist/amg00353-lionsgatefilmsi-moviesphereaus-samsungau/playlist.m3u8
 #EXTINF:-1 tvg-id="HallmarkMoviesMore.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/hallmark-movies-more.png" group-title="Movies",Hallmark Movies & More
@@ -59,5 +57,3 @@ https://bein-xtra-bein.amagi.tv/playlistR1080p.m3u8
 https://sportsgrid-samsungus.amagi.tv/playlist1080pl.m3u8
 #EXTINF:-1 tvg-id="Toon Goggles" tvg-logo="https://upload.wikimedia.org/wikipedia/en/d/da/Toon_Goggles_logo.png" group-title="Kids",Toon Goggles
 https://amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv/playlist/amg01329-otterainc-toongoggles-samsungau/playlist.m3u8
-#EXTINF:-1 tvg-id="LegoChannel.us" tvg-logo="https://i.imgur.com/xePwW13.png" group-title="Kids",Lego Channel
-https://dltiqboxjw21d.cloudfront.net/index/2.m3u8
