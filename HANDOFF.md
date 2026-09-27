@@ -8,9 +8,11 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest = `5b346b8` plus the doc commit after it); nothing is half-done._
+_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest = `ac79751` plus the doc commit after it); nothing is half-done._
 
 ## Last completed
+
+- **Lego Channel and Pluto TV Trending Now removed; lineup now 29 (2026-09-27 ~12:15, `ac79751`).** After a quality measurement of all 31 channels (decoded resolution, audio, reliability) the owner cut the two flagged as definite: **Lego Channel** (failed the playback check 1 of 2 re-runs; plain-HTTP segments) and **Pluto TV Trending Now** (only the Pluto bumper). This closes the long-open "Pluto shows only its logo" owner decision. `git revert ac79751` restores both (previous state `7bf2360`). **`steam-hotel-pluto-proxy` and its status-page binding stay** because Paramount Movie Channel uses them. Groups: ROYS HOTEL / Digital TV Thai (11) / News (6) / Movies (6) / Sports (4) / Kids (1 - Toon Goggles). Low-resolution channels still in (360-432p, the only working movie channels): Paramount, Hallmark, Rakuten Viki - the owner did not choose to cut them. Bot `SKILL.md` expects 29; `CLAUDE.md`/`AGENTS.md` updated.
 
 - **Series group folded back into Movies (2026-09-27 ~11:55).** Owner: "รวมกลุ่ม Series เข้า Movies" - Series had only Rakuten Viki after the last trim. Movies now has 7 channels (Gravitas, Pluto TV Trending Now, MovieSphere, Hallmark, NEW K.MOVIES, Paramount Movie Channel, Rakuten Viki); there is no Series group any more. Still 31 channels.
 
