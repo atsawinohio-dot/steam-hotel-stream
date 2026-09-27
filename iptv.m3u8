@@ -47,8 +47,8 @@ https://ads.its-newid.net/api/manifest.m3u8?ads.service_id=GB1700007PK&channel_i
 https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/5cb0cae7a461406ffe3f5213.m3u8
 #EXTINF:-1 tvg-id="RakutenViki.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/rakuten-viki.png" group-title="Movies",Rakuten Viki
 https://fd18f1cadd404894a31a3362c5f319bd.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/RakutenTV-eu_RakutenViki-1/playlist.m3u8
-#EXTINF:-1 tvg-id="BabyFirst.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/babyfirst.png" group-title="Kids",BabyFirst
-https://cdn.fast.jwp.services/v1/channel/1_jB6940Ei_TvhvIHDL/manifest.m3u8
+#EXTINF:-1 tvg-id="PBSKids.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pbs-kids.png" group-title="Kids",PBS Kids
+https://livestream.pbskids.org/out/v1/14507d931bbe48a69287e4850e53443c/est.m3u8
 #EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
 https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
 #EXTINF:-1 tvg-id="Red Bull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_of_Red_bull.svg" group-title="Sports",Red Bull TV
