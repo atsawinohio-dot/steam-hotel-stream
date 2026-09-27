@@ -14,7 +14,6 @@ const PLAYLIST = "https://atsawinohio-dot.github.io/steam-hotel-stream/iptv.m3u8
 const BINDINGS = {
   "steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev": "CH3_PROXY",
   "steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev": "AMARIN_PROXY",
-  "steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev": "PLUTO_PROXY",
   "steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev": "MCOT_PROXY",
   "steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev": "THAIRATH_PROXY",
   "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev": "PPTV_PROXY",
