@@ -55,6 +55,8 @@ https://d3k8wzt41aflvx.cloudfront.net/RAINEWS24/Live.m3u8
 https://cdn-euronews.akamaized.net/live/eds/euronews-en/25002/index.m3u8
 #EXTINF:-1 tvg-id="AlArabiyaEnglish.sa" group-title="News",Al Arabiya English
 https://live.alarabiya.net/alarabiapublish/english/playlist_dvr.m3u8
+#EXTINF:-1 tvg-id="VTV4.vn" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/c/cd/VTV4_logo_2026.png" group-title="News",VTV4 (Vietnam)
+https://live.fptplay53.net/live/media/vtv4/live247-hls-avc/index.m3u8
 #EXTINF:-1 tvg-id="ArirangTV.kr" tvg-logo="https://i.imgur.com/Asu5pE9.png" group-title="International",Arirang TV
 https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/chunklist_b3256000_sleng.m3u8
 #EXTINF:-1 tvg-id="CCTV4Asia.cn" tvg-logo="https://i.imgur.com/tWt4Wou.png" group-title="International",CCTV4
