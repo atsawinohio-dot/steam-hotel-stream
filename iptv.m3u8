@@ -3,6 +3,8 @@
 https://atsawinohio-dot.github.io/steam-hotel-stream/playlist.m3u8
 #EXTINF:-1 tvg-id="ThaiPBS.th@SD" tvg-logo="https://i.imgur.com/CwalZjr.png" group-title="Digital TV Thai",Thai PBS
 https://thaipbs-live.cdn.byteark.com/live/playlist_1080p/index.m3u8
+#EXTINF:-1 tvg-id="NBTWorld.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/nbt-world.png" tvg-name="NBT World" group-title="Digital TV Thai",NBT World
+https://cdn-edge.iiptvcdn.com/live_event/smil:d36f-93c1-9c58-fdcc-427f.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="ThaiTV5HD1.th" tvg-name="TV5 HD" group-title="Digital TV Thai" tvg-logo="https://i.imgur.com/wOIaqg7.png",TV5 HD
 https://nodelive.thaitv5hd.com/hls/tv5hdlive-for-thaitv5hdcom/master.m3u8
 #EXTINF:-1 tvg-id="Channel8.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/channel-8.png" tvg-name="Channel 8" group-title="Digital TV Thai",Channel 8
