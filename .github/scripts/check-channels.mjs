@@ -25,7 +25,7 @@ const RETRY_DELAY_MS = 10_000;
 // 451s from abroad only some of the time, so it passed here at 20:46 while
 // the Cloudflare checker had flagged it at 20:01 and 20:31. From the hotel
 // laptop, inside Thailand, it answers 200 on every attempt.
-const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "PPTV HD 36", "Channel 8", "3HD"]);
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "PPTV HD 36", "Channel 8", "3HD", "TNN16"]);
 const GEO_STATUS = /\b(403|451)\b/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
