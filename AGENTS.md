@@ -8,11 +8,11 @@ A single-page IPTV web app for ROYS Hotel: fullscreen live-TV player with a slid
 
 Live site: https://atsawinohio-dot.github.io/steam-hotel-stream/
 
-## Open work (2026-09-16)
+## Open work (updated 2026-09-27)
 
 The full, machine-specific handoff (status table, workspace layout on the hotel laptop, where secrets live, gotchas) is in `E:\Steam Hotel\CLAUDE.md` on the hotel laptop — Claude Code loads it automatically when opened anywhere under that folder.
 
-**No open work on the main 20-channel lineup right now.** Channel 21 "Event" — the source of every item that used to be listed here (frame rate vs. brightness trade-off, unverified mic levels, room lighting, the hourly guard bot) — was **decommissioned by the owner on 2026-09-16** (worker deleted, bot disabled; see the "Channel 21" section below and `HANDOFF.md`). None of those items are actionable anymore since there's no channel for them to apply to. If the owner ever asks to rebuild channel 21, re-read that section before doing anything — the trade-offs and gotchas it documents still apply once a camera and a worker exist again.
+**The lineup is now 39 channels (2026-09-27) — see "Lineup and health checkers" below. Nothing is broken or half-finished on it; the only open items are the owner-decision list in `CLAUDE.md` § ⏳ (Pluto TV shows only its logo bumper, antenna idea, laptop-bot uptime).** Channel 21 is unrelated: Channel 21 "Event" — the source of every item that used to be listed here (frame rate vs. brightness trade-off, unverified mic levels, room lighting, the hourly guard bot) — was **decommissioned by the owner on 2026-09-16** (worker deleted, bot disabled; see the "Channel 21" section below and `HANDOFF.md`). None of those items are actionable anymore since there's no channel for them to apply to. If the owner ever asks to rebuild channel 21, re-read that section before doing anything — the trade-offs and gotchas it documents still apply once a camera and a worker exist again.
 
 ## Multi-agent handoff protocol
 
@@ -29,6 +29,10 @@ This project gets worked on by more than one AI tool (Claude Code, ChatGPT Codex
 index.html          Everything: markup, CSS, and JS in one file. This is the whole app.
 iptv.m3u8            Channel list (M3U8 playlist format: #EXTINF + logo/group metadata + stream URL per channel).
 playlist.m3u8         HLS playlist for the hotel's own looping welcome video (ROYS HOTEL channel).
+one31.m3u8, gmm25.m3u8  Hand-written HLS masters we host ourselves for ONE31 and GMM25 (pick the 1080p variant, pair it with the audio rendition, mark audio DEFAULT=YES). They embed the source's tokenised URLs - see "Lineup and health checkers".
+logos/                Channel logos we host ourselves (PNG, <=512 px). Every channel in iptv.m3u8 has a tvg-logo; add new logos here rather than hot-linking someone else's site.
+workers/              Source of every Cloudflare Worker we run (ch3-proxy, amarin-proxy, pptv-proxy, ch8-proxy, mcot-proxy, thairath-proxy, pluto-proxy, status-page, ...). Each has its own wrangler.toml.
+.github/              GitHub Actions channel health check (workflows/channel-health.yml + scripts/check-channels.mjs).
 segment_*.ts          The 26 video segments (100.96s, 1080p25, ~7 Mbps) that playlist.m3u8 loops through (372 loops = ~10.4h via repeated refs + EXT-X-DISCONTINUITY). Replaced 2026-09-23 — see HANDOFF.md for the encode settings.
 promo/segment_*.ts    The 6 segments (4.000s each, exactly 24s total) of the hotel's signage reel (ROYS PROMO channel).
 promo/playlist.m3u8   Static 24h VOD loop of those segments. NOT what the channel points at — kept as a fallback;
@@ -76,6 +80,16 @@ PPTV serves a signed byteark URL (`x_ark_*`, ~6h validity) from its player ifram
 - It also can't just redirect to PPTV's real master: that lists 1080p first and declares nonsense `BANDWIDTH` values (1080p tagged 500kbps, 144p 50kbps), so ABR has no usable signal and `startLevel: 0` would pin everyone to 1080p.
 - The worker only fetches pptvhd36.com, never byteark, so byteark's Cloudflare-egress block can't affect it and segments still leave from the player's own Thai IP.
 - If it breaks: check that the player iframe still contains a `...playlist.m3u8?x_ark_...` URL and update the regex in `workers/pptv-proxy/worker.js`. The regex captures the whole URL including host, so a CDN hostname change is handled automatically.
+
+### Channel 8 (thaich8.com) auto-refresh manifest
+
+Channel 8's live page signs a byteark URL (`x_ark_*`, **~3h validity**) and exposes the signer as JSON: `https://www.thaich8.com/live/sign?var_link=720p` returns `{signedUrl, expireTimestamp}`. (The signed URL is also embedded in the `/live` HTML as `INITIAL_URL`.)
+
+- Source: `workers/ch8-proxy/`. Deployed as `steam-hotel-ch8-proxy.tiny-hall-8718.workers.dev`, KV binding `CH8_TOKEN_CACHE`. Playlist URL: `/live/playlist_720p.m3u8`.
+- Same shape as `pptv-proxy`: fetch the signer, cache the token in KV (refresh 40 min before expiry), hand the player a one-variant master whose URL carries a fresh token. Only the manifest goes through the worker; chunklists and segments come from byteark straight to the TV.
+- Channel 8's 720p rendition is **muxed** (video + audio in one stream, verified with ffprobe), so unlike PPTV no `#EXT-X-MEDIA` audio group is needed. Its real master lists 240p first, hence the pinned single 720p variant. There is no 1080p (404).
+- **Known limit:** a TV that stays on the channel longer than the token life (~3h) will stall until the viewer changes channel and back - the player never re-reads the master. PPTV has the same limit at ~6h.
+- If it breaks: re-run `curl https://www.thaich8.com/live/sign?var_link=720p` and check the JSON shape.
 
 ### Pluto TV CORS shim
 
@@ -265,6 +279,26 @@ OBS --RTMP--> ffmpeg on the hotel PC --HLS over HTTPS PUT--> steam-hotel-event w
 - **The quota is the real constraint.** The Free plan's 100,000 Worker requests/day are per *account*, shared with the 3HD / Amarin / Pluto proxies (which use well under 100/day as of 2026-09-13). A viewer costs ~1,200 requests/hour, so the worker caps itself at `DAILY_BUDGET` = 85,000/day: once spent, it serves an `#EXT-X-ENDLIST` playlist, which makes players *stop polling* (rejecting requests wouldn't help — a rejected request still counts). The event goes off air until 07:00 Bangkok (00:00 UTC reset), but the rest of the lineup survives. Rough capacity: ~70 viewer-hours a day, e.g. 20 TVs for 3.5 hours. Check `/status` → `requestsToday` during an event.
 - Durable Object limits that shaped the code: rows are capped at 2 MB (a 6s segment at 2.5 Mbps is ~1.9 MB, so segments are split into 1 MB rows); 100,000 rows written/day (the request counter lives in memory and is flushed every 200 requests or on each playlist upload, rather than written per request).
 - If the owner ever accepts the R2 subscription, moving segment storage to R2 with public r2.dev reads would take viewing off the Worker quota entirely.
+
+## Lineup and health checkers (as of 2026-09-27, 39 channels)
+
+**Lineup by group:** ROYS HOTEL (1) · Digital TV Thai (13: 3HD, TV5 HD, CH7 HD, MCOT HD, Amarin TV HD, Thai PBS, Thairath TV 32, ONE31, PPTV HD 36, NBT2 HD, GMM25, Channel 8, NBT World) · News (15: BBC, Al Jazeera, NHK World, DW, France 24, ABC News Australia, CNA, i24NEWS, TRT World, WION, NBC News NOW, Rai News 24, Euronews, Al Arabiya English, VTV4) · International (Arirang, CCTV4) · Movies (Gravitas, Pluto TV Trending Now) · Sports (TRACE Sport Stars, Red Bull TV, beIN SPORTS XTRA, SportsGrid) · Kids (Toon Goggles, Lego Channel). The count is not a rule - the checkers read it from the playlist - but the laptop bot's `SKILL.md` remembers it, so update that too when it changes.
+
+**How each channel is delivered** (pick the same pattern when adding a similar one):
+- *Plain direct URL* - most channels, incl. the international news feeds and NBT2 HD / NBT World (`cdn-edge.iiptvcdn.com`, master URL only; never a URL with a `chunklist_w<digits>` session number).
+- *Proxy worker that returns a manifest with a fresh token* (never a redirect - Samsung TVs cannot follow 302): 3HD, Amarin, PPTV, Channel 8, MCOT (also drops dead variants), Thairath (also adds a Referer; video itself flows through the worker), Pluto.
+- *Self-hosted master on Pages* for Brightcove channels: `one31.m3u8` and `gmm25.m3u8`. Brightcove's own master lists 360p/720p first and marks the audio track `DEFAULT=NO`, and the 1080p chunklist is video-only, so pointing straight at it gives low quality or silence. **Cloudflare Workers are blocked by Brightcove/Fastly (403), so no worker is possible for these.** ONE31's file embeds a Brightcove token and GMM25's embeds a JWT (no `exp` claim seen); if either channel dies, get a fresh URL from the oned.net live page in a real browser (`performance.getEntriesByType('resource')`, filter `fastly.live.brightcove.com`; GMM25 is `oned.net/live-tv/gmm25`) and rewrite the file.
+
+**Health checks (3 layers, all count channels from the playlist itself):**
+1. GitHub Actions `channel-health.yml` (08:10 and 18:10 ICT): master -> first variant -> **the newest segment must download with real bytes** (Range 16 KB), so it catches manifests that answer 200 while the TV cannot play. Exits 1 on any down channel -> GitHub emails the owner.
+2. Cloudflare status page `steam-hotel-status` (cron every 30 min): free plan allows 50 subrequests per invocation, and 39 channels cost ~2 each, so it **checks a rotating slice of <=16 channels per run** (KV `cursor`) plus up to 4 that were down last time, carrying older results over and showing when each was checked. Full coverage takes ~1.5h (3 slices); the slice count grows by itself as channels are added (one more slice per 16 channels), so the only cost of a bigger lineup is a longer gap between re-checks of each channel. The manual button checks the *next slice*, not everything. It reaches our proxies through **service bindings** - a new proxy needs both a `[[services]]` entry in `wrangler.toml` *and* a line in the `BINDINGS` table in `worker.js`, or the check silently gets 404.
+3. Laptop bot `iptv-channel-health-check` (hourly, in Thailand, may repair): the authority for geo-blocked channels.
+
+**`GEO_BLOCKED`** (exists in both `check-channels.mjs` and `status-page/worker.js` - edit both): channels whose origin answers 403/451 to non-Thai networks, so a foreign checker's failure means nothing: CH7 HD, Thai PBS, Amarin TV HD (intermittent), PPTV HD 36 and Channel 8 (byteark; GitHub gets 403 on the segment, Cloudflare gets 404 on the variant - the status page excuses that too). ONE31 is excused on the Cloudflare side only. Verified 2026-09-27: none of the international news channels need it (they passed from Thailand, Cloudflare and GitHub's US runners).
+
+**Adding a channel - checklist:** (1) find the URL in a real browser (`performance.getEntriesByType('resource')` on the station's live page) and prove it: no redirects, first variant and a segment download, `ffmpeg -frames:v 1` gives a real, current picture, audio present (`volumedetect`), and `#EXT-X-PLAYLIST-TYPE` is not `VOD`; (2) put the logo in `logos/`; (3) add the two lines to `iptv.m3u8` and push; (4) if it goes through a new worker, add the service binding *and* the `BINDINGS` line; (5) if a foreign checker gets 403/451, add it to `GEO_BLOCKED` in both places; (6) update the count in the laptop bot's `SKILL.md` and `CLAUDE.md`; (7) have the owner watch it on a real TV - "curl and ffmpeg pass" has not always meant "the Samsung plays it".
+
+**Editing gotchas:** `workers/status-page/worker.js` has CRLF line endings, so a multi-line `str.replace` written with `\n` matches nothing and fails **silently** (this dropped two BINDINGS lines once) - use the Edit tool or assert the match. The Bash tool also eats backslashes, so write patch scripts with the Write tool.
 
 ## Editing `iptv.m3u8`
 
