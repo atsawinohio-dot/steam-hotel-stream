@@ -12,6 +12,8 @@ _No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) â€
 
 ## Last completed
 
+- **MyTime Movie Network added; lineup now 33 (2026-09-27 ~11:10).** Owner picked it from the "usable, not yet added" list. Amagi feed, no redirect, 360p first variant (normal), playback check and GitHub check pass. Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 33. Not watched on a real TV.
+
 - **Paramount Movie Channel added; lineup now 32 (2026-09-27 ~11:00).** The owner asked for Sony One, Miramax, Paramount Movie Channel, Universal Movies, MovieSphere, NEW K-MOVIES and Rakuten TV Top Movies. Only Paramount was new AND reachable (via `steam-hotel-pluto-proxy` with its Pluto channel id; verified real film, audio -23.6 dB). MovieSphere and NEW K-MOVIES were already in. Not added: Miramax and Universal Movies (only on Samsung TV Plus/Xumo; no reachable stream URL), Sony One (only French feeds, audio language unknown), Rakuten Top Movies (only Finnish/Polish feeds with default local subtitles; the English feed with a 2024 film has no TV-playable link). Details and reasons are in CLAUDE.md. The Pluto proxy passes media playlists through the worker, so more Pluto channels means more shared Workers quota use. Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 32.
 
 - **Universal Crime added: lineup now 31 (2026-09-27 ~10:20).** Owner picked it from the "usable, not yet added" list (classic crime series, saw Columbo 1970s; not a movie channel). NEW K.MOVIES film years checked for today's four titles: 2009, 2011, 2016, 2019-2020. The owner then asked for ONE channel of genuinely new movies - see the entry directly below/CLAUDE.md for what was found.
