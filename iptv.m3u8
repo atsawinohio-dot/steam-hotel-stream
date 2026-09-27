@@ -53,7 +53,7 @@ https://d1si3n1st4nkgb.cloudfront.net/10502/88896001/hls/master.m3u8?ads.xumo_ch
 https://d3k8wzt41aflvx.cloudfront.net/RAINEWS24/Live.m3u8
 #EXTINF:-1 tvg-id="EuronewsEnglish.fr" tvg-logo="https://a.jsrdn.com/hls/22886/euronews/extras/1080_logo.png" group-title="News",Euronews English
 https://cdn-euronews.akamaized.net/live/eds/euronews-en/25002/index.m3u8
-#EXTINF:-1 tvg-id="AlArabiyaEnglish.sa" group-title="News",Al Arabiya English
+#EXTINF:-1 tvg-id="AlArabiyaEnglish.sa" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/al-arabiya-english.png" group-title="News",Al Arabiya English
 https://live.alarabiya.net/alarabiapublish/english/playlist_dvr.m3u8
 #EXTINF:-1 tvg-id="VTV4.vn" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/c/cd/VTV4_logo_2026.png" group-title="News",VTV4 (Vietnam)
 https://live.fptplay53.net/live/media/vtv4/live247-hls-avc/index.m3u8
