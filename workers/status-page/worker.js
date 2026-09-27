@@ -33,7 +33,7 @@ const BINDINGS = {
 // fix that (see AGENTS.md § ONE31 for why one wasn't built). Either way the
 // failure is shown as "can't check from here", not as down; any other
 // failure on these channels still counts.
-const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "ONE31", "PPTV HD 36", "Channel 8"]);
+const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "ONE31", "PPTV HD 36", "Channel 8", "3HD"]);
 const GEO_STATUS = /\b(403|451)\b/;
 // PPTV and Channel 8 are behind byteark: the manifest comes from our own
 // worker (which we can verify), but byteark answers Cloudflare's network with
