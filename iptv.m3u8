@@ -37,16 +37,12 @@ https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/ch
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
 #EXTINF:-1 tvg-id="GravitasMovies.us" tvg-logo="https://i.imgur.com/H2hD4vT.png" group-title="Movies",Gravitas Movies
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
-#EXTINF:-1 tvg-id="MovieSphere.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/moviesphere.png" group-title="Movies",MovieSphere
-https://amg00353-lionsgatefilmsi-moviesphereaus-samsungau-7qzhf.amagi.tv/playlist/amg00353-lionsgatefilmsi-moviesphereaus-samsungau/playlist.m3u8
-#EXTINF:-1 tvg-id="HallmarkMoviesMore.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/hallmark-movies-more.png" group-title="Movies",Hallmark Movies & More
-https://dbrb49pjoymg4.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod_default_xumo-ams-aws/master.m3u8?ads.xumo_channelId=99991709
 #EXTINF:-1 tvg-id="NEWKMOVIES.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/new-k-movies.png" group-title="Movies",NEW K.MOVIES
 https://ads.its-newid.net/api/manifest.m3u8?ads.service_id=GB1700007PK&channel_id=newid_343&tp=samsung_tvplus
-#EXTINF:-1 tvg-id="ParamountMovieChannel.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/paramount-movie-channel.png" group-title="Movies",Paramount Movie Channel
-https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/5cb0cae7a461406ffe3f5213.m3u8
-#EXTINF:-1 tvg-id="RakutenViki.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/rakuten-viki.png" group-title="Movies",Rakuten Viki
-https://fd18f1cadd404894a31a3362c5f319bd.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/RakutenTV-eu_RakutenViki-1/playlist.m3u8
+#EXTINF:-1 tvg-id="Comet.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/comet.png" group-title="Movies",Comet
+https://fast-channels.sinclairstoryline.com/COMET/index.m3u8
+#EXTINF:-1 tvg-id="Charge.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/charge.png" group-title="Movies",Charge!
+https://fast-channels.sinclairstoryline.com/CHARGE/index.m3u8
 #EXTINF:-1 tvg-id="PBSKids.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pbs-kids.png" group-title="Kids",PBS Kids
 https://livestream.pbskids.org/out/v1/14507d931bbe48a69287e4850e53443c/est.m3u8
 #EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
