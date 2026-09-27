@@ -53,6 +53,10 @@ https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/5cb0cae7a461406ffe3f5
 https://appletree-mytimeau-samsung.amagi.tv/playlist.m3u8
 #EXTINF:-1 tvg-id="UniversalCrime.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/universal-crime.png" group-title="Series",Universal Crime
 https://xumo-xumoent-vc-107-xmuvk.fast.nbcuni.com/live/master.m3u8
+#EXTINF:-1 tvg-id="KContentbyCJENM.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/k-content-cj-enm.png" group-title="Series",K-Content by CJ ENM
+https://d2q0mzb9bm4w5z.cloudfront.net/68fee8e1_605a_437b_b968_244c3c0d5f24/hls/playlist.m3u8
+#EXTINF:-1 tvg-id="RakutenViki.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/rakuten-viki.png" group-title="Series",Rakuten Viki
+https://fd18f1cadd404894a31a3362c5f319bd.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/RakutenTV-eu_RakutenViki-1/playlist.m3u8
 #EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
 https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
 #EXTINF:-1 tvg-id="Red Bull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_of_Red_bull.svg" group-title="Sports",Red Bull TV
