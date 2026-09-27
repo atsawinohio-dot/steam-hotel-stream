@@ -38,3 +38,7 @@ service = "steam-hotel-pptv-proxy"
 [[services]]
 binding = "CH8_PROXY"
 service = "steam-hotel-ch8-proxy"
+
+[[services]]
+binding = "THAI_LIVE_PROXY"
+service = "steam-hotel-thai-live-proxy"

@@ -18,6 +18,8 @@ const BINDINGS = {
   "steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev": "THAIRATH_PROXY",
   "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev": "PPTV_PROXY",
   "steam-hotel-ch8-proxy.tiny-hall-8718.workers.dev": "CH8_PROXY",
+  // One Worker serves both True4U and TNN16.
+  "steam-hotel-thai-live-proxy.tiny-hall-8718.workers.dev": "THAI_LIVE_PROXY",
 };
 
 // Channels this Worker's own network can't reach, for reasons that have

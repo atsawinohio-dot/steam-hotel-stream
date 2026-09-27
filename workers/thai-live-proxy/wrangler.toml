@@ -1,0 +1,7 @@
+name = "steam-hotel-thai-live-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "THAI_TOKEN_CACHE"
+id = "f33ff5c6330a4f69b96be33ade30fa9c"
