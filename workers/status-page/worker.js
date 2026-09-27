@@ -17,6 +17,8 @@ const BINDINGS = {
   "steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev": "PLUTO_PROXY",
   "steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev": "MCOT_PROXY",
   "steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev": "THAIRATH_PROXY",
+  "steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev": "PPTV_PROXY",
+  "steam-hotel-ch8-proxy.tiny-hall-8718.workers.dev": "CH8_PROXY",
 };
 
 // Channels this Worker's own network can't reach, for reasons that have
