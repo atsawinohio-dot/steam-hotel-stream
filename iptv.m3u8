@@ -19,8 +19,6 @@ https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p
 https://atsawinohio-dot.github.io/steam-hotel-stream/one31.m3u8
 #EXTINF:-1 tvg-id="PPTVHD36.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pptv-hd-36.png" tvg-name="PPTV HD 36" group-title="Digital TV Thai",PPTV HD 36
 https://steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
-#EXTINF:-1 tvg-id="NBT2HD.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/nbt2-hd.png" tvg-name="NBT2 HD" group-title="Digital TV Thai",NBT2 HD
-https://cdn-edge.iiptvcdn.com/live_event/smil:f180-054a-38d7-ce66-f7cf.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="GMM25.th" tvg-name="GMM25" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/gmm25.png",GMM25
 https://atsawinohio-dot.github.io/steam-hotel-stream/gmm25.m3u8
 #EXTINF:-1 tvg-id="Channel8.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/channel-8.png" tvg-name="Channel 8" group-title="Digital TV Thai",Channel 8
@@ -49,12 +47,6 @@ https://dbrb49pjoymg4.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae04
 https://ads.its-newid.net/api/manifest.m3u8?ads.service_id=GB1700007PK&channel_id=newid_343&tp=samsung_tvplus
 #EXTINF:-1 tvg-id="ParamountMovieChannel.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/paramount-movie-channel.png" group-title="Movies",Paramount Movie Channel
 https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/5cb0cae7a461406ffe3f5213.m3u8
-#EXTINF:-1 tvg-id="MyTimeMovieNetwork.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/mytime-movie-network.png" group-title="Movies",MyTime Movie Network
-https://appletree-mytimeau-samsung.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="UniversalCrime.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/universal-crime.png" group-title="Series",Universal Crime
-https://xumo-xumoent-vc-107-xmuvk.fast.nbcuni.com/live/master.m3u8
-#EXTINF:-1 tvg-id="KContentbyCJENM.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/k-content-cj-enm.png" group-title="Series",K-Content by CJ ENM
-https://d2q0mzb9bm4w5z.cloudfront.net/68fee8e1_605a_437b_b968_244c3c0d5f24/hls/playlist.m3u8
 #EXTINF:-1 tvg-id="RakutenViki.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/rakuten-viki.png" group-title="Series",Rakuten Viki
 https://fd18f1cadd404894a31a3362c5f319bd.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/RakutenTV-eu_RakutenViki-1/playlist.m3u8
 #EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
