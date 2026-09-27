@@ -8,9 +8,11 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest `040dc54` plus the doc commit after it); nothing is half-done._
+_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest `41f1461` plus the doc commit after it); nothing is half-done._
 
 ## Last completed
+
+- **Lineup now 30: NBT World also removed (2026-09-27 ~09:10, `41f1461`).** Owner answered the pending proposal: **keep** Pluto TV Trending Now, SportsGrid and beIN SPORTS XTRA, **cut** NBT World (duplicate of NBT2 HD; `logos/nbt-world.png` deleted; `git revert 41f1461` restores). So the "proposed but NOT applied" list in the entry below is settled. Pluto TV still only shows the Pluto bumper - the owner chose to keep it anyway; nothing to do unless they change their mind. Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 30. Next step is unchanged: find music / documentary-travel / a working movie channel, after asking which guest nationalities matter most.
 
 - **Lineup trimmed 39 -> 31 and regrouped (2026-09-27 ~09:05, `040dc54`).** Owner asked whether 39 was too many, then whether news was too much ("จัดให้เหมาะสมหน่อย" / "ข่าวเยอะไปไหม" / "ตัดตามข้อเสนอเลย"). 17 of 39 were international news, many overlapping. **Removed on the owner's instruction:** France 24 English, Euronews English, Al Arabiya English, ABC News Australia, Rai News 24, TRT World, i24NEWS, VTV4 (all were working; `git revert 040dc54` restores them, previous state `1e3dd38`). Groups are now ROYS HOTEL / Digital TV Thai (13) / **News World** (BBC, Al Jazeera, DW, NBC News NOW) / **News Asia** (CNA, WION, NHK, Arirang, CCTV4) / Movies / Sports / Kids. Laptop bot `SKILL.md` now expects 31 and says the 8 removals are intentional (do not re-add or report missing); `CLAUDE.md` and `AGENTS.md` updated. **Proposed but NOT applied (waiting on the owner):** drop Pluto TV Trending Now (only the Pluto bumper), SportsGrid (betting content), beIN SPORTS XTRA, NBT World (duplicate of NBT2). **Gaps to fill next:** music, documentary/travel, a working movie channel - not searched yet; the owner should first say which guest nationalities matter most. Everything earlier in this section that mentions 39 channels or those 8 news channels describes the state before this trim.
 
