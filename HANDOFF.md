@@ -8,9 +8,11 @@ Live status board for handing work between AI agents (Claude Code, ChatGPT Codex
 
 ## Status: idle
 
-_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest `41f1461` plus the doc commit after it); nothing is half-done._
+_No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) — 2026-09-27 ~09:10 ICT. Everything below is committed and pushed (latest = the "Add music/documentary" commit plus the doc commit after it); nothing is half-done._
 
 ## Last completed
+
+- **Music and documentary channels added: lineup now 35 (2026-09-27 ~09:20).** Owner: "หาช่องดนตรีกับสารคดีให้เลย". Added **Music:** Stingray Greatest Hits, Qello Concerts by Stingray, ZenLIFE by Stingray; **Documentary:** WildEarth, Terra Mater WILD (groups sit between Movies and Sports). Screened ~28 candidates from iptv-org with a temporary playlist + `tools/deep-check.mjs`; rejected: Vevo x6 and Curiosity NOW / Documentary+ / Love The Planet (dead hosts), History Hit (307 redirect - Samsung cannot follow), Love Nature (HEVC 4K, master lists 11 Mbps first - would need a self-hosted 1080p master and HEVC proof on a real TV), Outdoor America (hunting), CGTN Documentary (state media), pirate mirrors (NatGeo, BBC Earth). Spare vetted options if wanted: Stingray Classica, DJAZZ, Smooth Jazz, Today's K-Pop, The Spa, INWILD, NatureTime. **Also fixed `tools/deep-check.mjs`:** ffmpeg 8 needs `-allowed_segment_extensions ALL -extension_picky 0` for Amagi feeds; the old "Toon Goggles cannot be read by ffmpeg" conclusion (and its skip) was wrong and is removed. Bot `SKILL.md` expects 35. Not yet watched on a real TV; the five new ones show 240-432p first variants (normal for FAST). Still open: a travel channel and a working movie channel.
 
 - **Lineup now 30: NBT World also removed (2026-09-27 ~09:10, `41f1461`).** Owner answered the pending proposal: **keep** Pluto TV Trending Now, SportsGrid and beIN SPORTS XTRA, **cut** NBT World (duplicate of NBT2 HD; `logos/nbt-world.png` deleted; `git revert 41f1461` restores). So the "proposed but NOT applied" list in the entry below is settled. Pluto TV still only shows the Pluto bumper - the owner chose to keep it anyway; nothing to do unless they change their mind. Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 30. Next step is unchanged: find music / documentary-travel / a working movie channel, after asking which guest nationalities matter most.
 
