@@ -1,57 +1,57 @@
 #EXTM3U
 #EXTINF:-1 tvg-id="ROYS HOTEL" tvg-logo="https://www.theroyshotel.com/wp-content/uploads/2026/03/ROYS-Logo.webp" group-title="ROYS HOTEL",ROYS HOTEL
 https://atsawinohio-dot.github.io/steam-hotel-stream/playlist.m3u8
-#EXTINF:-1 tvg-id="3HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/3/32/Ch.3_Logo_%281970%29.png" group-title="Digital TV Thai",3HD
-https://steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev/live/720p/index.m3u8
-#EXTINF:-1 tvg-id="ThaiTV5HD1.th" tvg-name="TV5 HD" group-title="Digital TV Thai" tvg-logo="https://i.imgur.com/wOIaqg7.png",TV5 HD
-https://nodelive.thaitv5hd.com/hls/tv5hdlive-for-thaitv5hdcom/master.m3u8
-#EXTINF:-1 tvg-id="Channel7.th" tvg-logo="https://i.imgur.com/IDMQ2xe.png" group-title="Digital TV Thai",CH7 HD
-https://live-cdn.ch7.com/out/v1/eafeb02c55b64a15b278b1e66c7fc776/playlist_9.m3u8
-#EXTINF:-1 tvg-id="MCOT HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/7/77/MCOT_Ch9_Logo.png" group-title="Digital TV Thai",MCOT HD
-https://steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev/live/playlist.m3u8
-#EXTINF:-1 tvg-id="AmarinTV.th" tvg-logo="https://www.amarintv.com/assets/images/global/logo_amarintv34HD.svg" group-title="Digital TV Thai",Amarin TV HD
-https://steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 #EXTINF:-1 tvg-id="ThaiPBS.th@SD" tvg-logo="https://i.imgur.com/CwalZjr.png" group-title="Digital TV Thai",Thai PBS
 https://thaipbs-live.cdn.byteark.com/live/playlist_1080p/index.m3u8
-#EXTINF:-1 tvg-id="ThairathTV.th" tvg-name="Thairath TV 32" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/thairath-tv-32.png",Thairath TV 32
-https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
-#EXTINF:-1 tvg-id="ONE31.th" tvg-name="ONE31" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/one31.png",ONE31
-https://atsawinohio-dot.github.io/steam-hotel-stream/one31.m3u8
-#EXTINF:-1 tvg-id="PPTVHD36.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pptv-hd-36.png" tvg-name="PPTV HD 36" group-title="Digital TV Thai",PPTV HD 36
-https://steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
-#EXTINF:-1 tvg-id="GMM25.th" tvg-name="GMM25" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/gmm25.png",GMM25
-https://atsawinohio-dot.github.io/steam-hotel-stream/gmm25.m3u8
+#EXTINF:-1 tvg-id="ThaiTV5HD1.th" tvg-name="TV5 HD" group-title="Digital TV Thai" tvg-logo="https://i.imgur.com/wOIaqg7.png",TV5 HD
+https://nodelive.thaitv5hd.com/hls/tv5hdlive-for-thaitv5hdcom/master.m3u8
 #EXTINF:-1 tvg-id="Channel8.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/channel-8.png" tvg-name="Channel 8" group-title="Digital TV Thai",Channel 8
 https://steam-hotel-ch8-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
-#EXTINF:-1 tvg-id="BBCNews.uk@NorthAmerica" tvg-logo="https://i.imgur.com/vSz2WEp.png" group-title="News",BBC News
-https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8
+#EXTINF:-1 tvg-id="MCOT HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/7/77/MCOT_Ch9_Logo.png" group-title="Digital TV Thai",MCOT HD
+https://steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev/live/playlist.m3u8
+#EXTINF:-1 tvg-id="GMM25.th" tvg-name="GMM25" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/gmm25.png",GMM25
+https://atsawinohio-dot.github.io/steam-hotel-stream/gmm25.m3u8
+#EXTINF:-1 tvg-id="ONE31.th" tvg-name="ONE31" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/one31.png",ONE31
+https://atsawinohio-dot.github.io/steam-hotel-stream/one31.m3u8
+#EXTINF:-1 tvg-id="ThairathTV.th" tvg-name="Thairath TV 32" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/thairath-tv-32.png",Thairath TV 32
+https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
+#EXTINF:-1 tvg-id="3HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/3/32/Ch.3_Logo_%281970%29.png" group-title="Digital TV Thai",3HD
+https://steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev/live/720p/index.m3u8
+#EXTINF:-1 tvg-id="AmarinTV.th" tvg-logo="https://www.amarintv.com/assets/images/global/logo_amarintv34HD.svg" group-title="Digital TV Thai",Amarin TV HD
+https://steam-hotel-amarin-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
+#EXTINF:-1 tvg-id="Channel7.th" tvg-logo="https://i.imgur.com/IDMQ2xe.png" group-title="Digital TV Thai",CH7 HD
+https://live-cdn.ch7.com/out/v1/eafeb02c55b64a15b278b1e66c7fc776/playlist_9.m3u8
+#EXTINF:-1 tvg-id="PPTVHD36.th" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pptv-hd-36.png" tvg-name="PPTV HD 36" group-title="Digital TV Thai",PPTV HD 36
+https://steam-hotel-pptv-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 #EXTINF:-1 tvg-id="AlJazeeraChannel.qa" tvg-logo="https://i.imgur.com/7bRVpnu.png" group-title="News",Al Jazeera
 https://live-hls-apps-aja-fa.getaj.net/AJA/01.m3u8
-#EXTINF:-1 tvg-id="WION.in" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/wion.png" group-title="News",WION
-http://vg-zeefta.akamaized.net/ptnr-yupptv/title-wion/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/20c3c0d9-0256-43fe-bca6-70fdd490b957/main.m3u8
-#EXTINF:-1 tvg-id="NHKWorldJapan.jp@HD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/NHK_World_Japan.png" group-title="News",NHK World-Japan HD
-https://nhk.lls.pbs.org/index_1080p.m3u8
 #EXTINF:-1 tvg-id="ArirangTV.kr" tvg-logo="https://i.imgur.com/Asu5pE9.png" group-title="News",Arirang TV
 https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/chunklist_b3256000_sleng.m3u8
+#EXTINF:-1 tvg-id="BBCNews.uk@NorthAmerica" tvg-logo="https://i.imgur.com/vSz2WEp.png" group-title="News",BBC News
+https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8
 #EXTINF:-1 tvg-id="CCTV4Asia.cn" tvg-logo="https://i.imgur.com/tWt4Wou.png" group-title="News",CCTV4
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
+#EXTINF:-1 tvg-id="NHKWorldJapan.jp@HD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/NHK_World_Japan.png" group-title="News",NHK World-Japan HD
+https://nhk.lls.pbs.org/index_1080p.m3u8
+#EXTINF:-1 tvg-id="WION.in" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/wion.png" group-title="News",WION
+http://vg-zeefta.akamaized.net/ptnr-yupptv/title-wion/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/20c3c0d9-0256-43fe-bca6-70fdd490b957/main.m3u8
+#EXTINF:-1 tvg-id="Charge.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/charge.png" group-title="Movies",Charge!
+https://fast-channels.sinclairstoryline.com/CHARGE/index.m3u8
+#EXTINF:-1 tvg-id="Comet.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/comet.png" group-title="Movies",Comet
+https://fast-channels.sinclairstoryline.com/COMET/index.m3u8
 #EXTINF:-1 tvg-id="GravitasMovies.us" tvg-logo="https://i.imgur.com/H2hD4vT.png" group-title="Movies",Gravitas Movies
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
 #EXTINF:-1 tvg-id="NEWKMOVIES.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/new-k-movies.png" group-title="Movies",NEW K.MOVIES
 https://ads.its-newid.net/api/manifest.m3u8?ads.service_id=GB1700007PK&channel_id=newid_343&tp=samsung_tvplus
-#EXTINF:-1 tvg-id="Comet.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/comet.png" group-title="Movies",Comet
-https://fast-channels.sinclairstoryline.com/COMET/index.m3u8
-#EXTINF:-1 tvg-id="Charge.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/charge.png" group-title="Movies",Charge!
-https://fast-channels.sinclairstoryline.com/CHARGE/index.m3u8
 #EXTINF:-1 tvg-id="PBSKids.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/pbs-kids.png" group-title="Kids",PBS Kids
 https://livestream.pbskids.org/out/v1/14507d931bbe48a69287e4850e53443c/est.m3u8
-#EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
-https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
-#EXTINF:-1 tvg-id="Red Bull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_of_Red_bull.svg" group-title="Sports",Red Bull TV
-https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_6660.m3u8
-#EXTINF:-1 tvg-id="beINSPORTSXTRA.us" tvg-logo="https://i.imgur.com/uJosqHh.png" group-title="Sports",beIN SPORTS XTRA
-https://bein-xtra-bein.amagi.tv/playlistR1080p.m3u8
-#EXTINF:-1 tvg-id="SportsGrid.us" tvg-logo="https://i.imgur.com/ulGKX30.png" group-title="Sports",SportsGrid
-https://sportsgrid-samsungus.amagi.tv/playlist1080pl.m3u8
 #EXTINF:-1 tvg-id="Toon Goggles" tvg-logo="https://upload.wikimedia.org/wikipedia/en/d/da/Toon_Goggles_logo.png" group-title="Kids",Toon Goggles
 https://amg01329-otterainc-toongoggles-samsungau-ad-4c.amagi.tv/playlist/amg01329-otterainc-toongoggles-samsungau/playlist.m3u8
+#EXTINF:-1 tvg-id="beINSPORTSXTRA.us" tvg-logo="https://i.imgur.com/uJosqHh.png" group-title="Sports",beIN SPORTS XTRA
+https://bein-xtra-bein.amagi.tv/playlistR1080p.m3u8
+#EXTINF:-1 tvg-id="Red Bull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_of_Red_bull.svg" group-title="Sports",Red Bull TV
+https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_6660.m3u8
+#EXTINF:-1 tvg-id="SportsGrid.us" tvg-logo="https://i.imgur.com/ulGKX30.png" group-title="Sports",SportsGrid
+https://sportsgrid-samsungus.amagi.tv/playlist1080pl.m3u8
+#EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
+https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
