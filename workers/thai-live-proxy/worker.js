@@ -25,16 +25,31 @@
 
 const CHANNELS = {
   true4u: {
+    mode: "signer",
     signUrl: "https://www.true4u.com/live-api/signer-url?prefix=/live/",
     referer: "https://www.true4u.com/live/",
     bandwidth: 3500000,
     kvKey: "true4u_signed_url",
   },
   tnn16: {
+    mode: "signer",
     signUrl: "https://www.tnnthailand.com/content-api/signer-url?prefix=/live",
     referer: "https://www.tnnthailand.com/live",
     bandwidth: 3500000,
     kvKey: "tnn16_signed_url",
+  },
+  // NBT World has no token - its master is public - but it is a Wowza origin
+  // that mints a new session id per request (chunklist_w<digits>_b<rate>.m3u8,
+  // the shape that broke MCOT on 2026-09-25) and advertises five renditions
+  // from 1080p down to 240p. Served raw it stuttered on the hotel TVs on
+  // 2026-09-28, most likely from the player hopping between those renditions.
+  // So: resolve a fresh session on every master request (never cache it) and
+  // hand back one pinned rendition, exactly what mcot-proxy does.
+  nbtworld: {
+    mode: "master",
+    masterUrl: "https://cdn-edge.iiptvcdn.com/live_event/smil:d36f-93c1-9c58-fdcc-427f.smil/playlist.m3u8",
+    pinBandwidth: 2128000, // the 1280x720 rung
+    bandwidth: 2128000,
   },
 };
 
@@ -92,6 +107,35 @@ async function refreshSigned(env, id) {
   return value;
 }
 
+async function pinnedMaster(id) {
+  const cfg = CHANNELS[id];
+  const res = await fetch(cfg.masterUrl, {
+    redirect: "follow",
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; SteamHotelThaiLiveProxy/1.0)" },
+  });
+  if (!res.ok) throw new Error(`Failed to load master for ${id}: HTTP ${res.status}`);
+  const lines = (await res.text()).split(/\r?\n/);
+
+  let variant = null;
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].startsWith("#EXT-X-STREAM-INF")) continue;
+    const bw = Number((lines[i].match(/BANDWIDTH=(\d+)/) || [])[1]);
+    if (bw === cfg.pinBandwidth) {
+      variant = lines[i + 1].trim();
+      break;
+    }
+  }
+  if (!variant) throw new Error(`Master for ${id} no longer offers BANDWIDTH=${cfg.pinBandwidth}`);
+
+  return [
+    "#EXTM3U",
+    "#EXT-X-VERSION:3",
+    `#EXT-X-STREAM-INF:BANDWIDTH=${cfg.bandwidth},RESOLUTION=1280x720`,
+    new URL(variant, res.url).toString(),
+    "",
+  ].join("\n");
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -109,6 +153,16 @@ export default {
     if (!id) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
 
     try {
+      if (CHANNELS[id].mode === "master") {
+        return new Response(await pinnedMaster(id), {
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/vnd.apple.mpegurl",
+            // The session id is minted per request; never hand back a stale one.
+            "Cache-Control": "no-store",
+          },
+        });
+      }
       const { base, query } = await getSigned(env, id);
       const body = [
         "#EXTM3U",
