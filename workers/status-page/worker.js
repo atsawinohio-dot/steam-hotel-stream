@@ -34,10 +34,23 @@ const BINDINGS = {
 // failure on these channels still counts.
 const GEO_BLOCKED = new Set(["CH7 HD", "Thai PBS", "Amarin TV HD", "ONE31", "PPTV HD 36", "Channel 8"]);
 const GEO_STATUS = /\b(403|451)\b/;
+// PPTV and Channel 8 are behind byteark: the manifest comes from our own
+// worker (which we can verify), but byteark answers Cloudflare's network with
+// a 404 on the variant while answering the hotel's TVs 200 (seen 2026-09-27:
+// both showed "variant HTTP 404" from here and play fine). So for GEO_BLOCKED
+// channels a *variant* 404 is also "can't check from here". A failing
+// manifest (our worker) still counts as down.
+const isGeo = (err) => GEO_STATUS.test(err) || /^variant .*\b404\b/.test(err);
 
 // Free plan: 50 subrequests per invocation. Budget below that, leaving room
 // for the playlist fetch and retries of failures.
 const SUBREQUEST_BUDGET = 45;
+// A full pass over 38 channels costs ~2 subrequests each, more than the budget,
+// so each run checks one rotating slice of at most PER_RUN channels (plus any
+// channel that was down last time) and carries the rest over from the previous
+// snapshot. Every channel is re-checked at least every ceil(n/PER_RUN) runs.
+const PER_RUN = 16;
+const MAX_RECHECK = 4;
 const HISTORY = 48; // one day of half-hourly runs
 const MANUAL_MIN_GAP_MS = 2 * 60 * 1000;
 
@@ -99,6 +112,18 @@ async function runCheck(env, source) {
     if (url) channels.push({ name, url: url.trim() });
   }
 
+  const prev = JSON.parse((await env.STATUS.get("latest")) || "null");
+  const prevBy = new Map(((prev && prev.channels) || []).map((c) => [c.name, c]));
+  const cursor = Number((await env.STATUS.get("cursor")) || 0);
+  const slices = Math.max(1, Math.ceil(channels.length / PER_RUN));
+  const inSlice = new Set(channels.filter((_, i) => i % slices === cursor % slices).map((c) => c.name));
+  const recheck = channels
+    .filter((c) => !inSlice.has(c.name))
+    .filter((c) => { const p = prevBy.get(c.name); return !p || p.state === "down" || p.state === "skip"; })
+    .slice(0, MAX_RECHECK);
+  recheck.forEach((c) => inSlice.add(c.name));
+  await env.STATUS.put("cursor", String((cursor + 1) % 1000));
+
   const attempt = async (ch) => {
     try { return await checkOnce(env, budget, ch.url); }
     catch (e) {
@@ -107,21 +132,28 @@ async function runCheck(env, source) {
     }
   };
 
-  const results = await Promise.all(channels.map(async (ch) => ({ ...ch, err: await attempt(ch) })));
+  const now = Date.now();
+  const results = await Promise.all(channels.map(async (ch) =>
+    inSlice.has(ch.name) ? { ...ch, fresh: true, err: await attempt(ch) } : { ...ch, fresh: false }));
   // One retry for failures, while budget lasts — live CDNs blip.
   for (const r of results) {
-    if (r.err && r.err !== "__budget" && budget.left > 2) r.err = await attempt(r);
+    if (r.fresh && r.err && r.err !== "__budget" && budget.left > 2) r.err = await attempt(r);
   }
 
   const out = results.map((r) => {
+    if (!r.fresh) {
+      const p = prevBy.get(r.name);
+      return p ? { ...p } : { name: r.name, state: "skip" };
+    }
     if (r.err === "__budget") return { name: r.name, state: "skip" };
-    if (r.err && GEO_BLOCKED.has(r.name) && GEO_STATUS.test(r.err)) return { name: r.name, state: "geo" };
-    return r.err ? { name: r.name, state: "down", err: r.err } : { name: r.name, state: "ok" };
+    if (r.err && GEO_BLOCKED.has(r.name) && isGeo(r.err)) return { name: r.name, state: "geo", at: now };
+    return r.err ? { name: r.name, state: "down", err: r.err, at: now } : { name: r.name, state: "ok", at: now };
   });
 
   const snapshot = {
     at: Date.now(),
     source,
+    checked: inSlice.size,
     channels: out,
     ok: out.filter((c) => c.state === "ok" || c.state === "geo").length,
     total: out.length,
@@ -135,6 +167,7 @@ async function runCheck(env, source) {
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const hm = (ms) => new Date(ms).toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
 const bkk = (ms) => new Date(ms).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 function page(latest, history) {
@@ -147,7 +180,7 @@ function page(latest, history) {
   const icon = { ok: "✅", down: "❌", geo: "🌏", skip: "⏸️" };
   const label = { ok: "ปกติ", geo: "ตรวจจากต่างประเทศไม่ได้ (บล็อกนอกไทย)", skip: "รอบนี้ไม่ได้ตรวจ" };
   const rows = latest ? latest.channels.map((c) =>
-    `<li class="${c.state}"><span>${icon[c.state]}</span><b>${esc(c.name)}</b><small>${esc(c.state === "down" ? c.err : label[c.state])}</small></li>`).join("") : "";
+    `<li class="${c.state}"><span>${icon[c.state]}</span><b>${esc(c.name)}</b><small>${esc((c.state === "down" ? c.err : label[c.state]) + (c.at && c.state !== "skip" ? " · ตรวจ " + hm(c.at) : ""))}</small></li>`).join("") : "";
   const hist = history.slice(0, 12).map((h) =>
     `<li><span>${bkk(h.at)}</span><span class="${h.down.length ? "bad" : "good"}">${h.down.length ? "ล่ม: " + esc(h.down.join(", ")) : `ปกติ ${h.ok}/${h.total}`}</span></li>`).join("");
   return `<!doctype html><html lang="th"><head><meta charset="utf-8">
@@ -171,9 +204,9 @@ form{margin:0 0 14px}button{font:inherit;padding:10px 16px;border-radius:10px;bo
 .note{color:var(--muted);font-size:13px;margin-top:18px}
 </style></head><body><main>
 <h1>สถานะช่องทีวี ROYS Hotel</h1>
-<div class="sub">${latest ? `ตรวจล่าสุด ${bkk(latest.at)} · ตรวจเองทุก 30 นาที` : "ตรวจเองทุก 30 นาที"}</div>
+<div class="sub">${latest ? `ตรวจล่าสุด ${bkk(latest.at)} · ตรวจเองทุก 30 นาที (หมุนเวียนทีละชุด ครบทุกช่องราว 1 ชม. ครึ่ง)` : "ตรวจเองทุก 30 นาที"}</div>
 ${verdict}
-<form method="post" action="/check"><button>ตรวจตอนนี้</button></form>
+<form method="post" action="/check"><button>ตรวจชุดถัดไปตอนนี้</button></form>
 <ul>${rows}</ul>
 <h2>ย้อนหลัง</h2><ul class="hist">${hist || "<li><span>ยังไม่มี</span></li>"}</ul>
 <p class="note">หน้านี้ไม่ส่งแจ้งเตือน — การแจ้งเตือนมาทางอีเมลจาก GitHub และมือถือจากบอทบนโน้ตบุ๊ก · 🌏 = ช่องที่บล็อกคนดูนอกไทย เซิร์ฟเวอร์ตรวจอาจอยู่ต่างประเทศจึงเช็กไม่ได้ ไม่ได้แปลว่าล่ม</p>

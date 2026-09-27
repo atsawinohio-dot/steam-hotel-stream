@@ -66,10 +66,31 @@ async function checkOnce(url) {
     if (vp) return `variant ${vp}`;
     if (!/\.(ts|m4s|mp4|aac)(\?|$)|^https?:\/\//m.test(vr.body.replace(/^#.*$/gm, "")))
       return "variant has no segments";
-    return null;
+    return segmentProblem(vr);
   }
   const media = r.body.replace(/^#.*$/gm, "").trim();
-  return media ? null : "no segments";
+  return media ? segmentProblem(r) : "no segments";
+}
+
+// A playlist that answers 200 proves little: what a TV actually needs is a
+// segment it can download (signed URLs that 403 on the segment, chunklists
+// pointing at deleted files). Fetch the newest segment of the media playlist
+// and require real bytes. Newest, not first: on a live playlist the first
+// entry can already be about to roll off.
+async function segmentProblem(mr) {
+  const uris = mr.body.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith("#"));
+  const ref = uris[uris.length - 1];
+  if (!ref) return null;
+  const u = new URL(ref.trim(), mr.url);
+  if (!u.search) u.search = new URL(mr.url).search;
+  const res = await fetch(u.href, {
+    redirect: "follow",
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+    headers: { "User-Agent": "Mozilla/5.0 (ROYS Hotel channel check)", Range: "bytes=0-16383" },
+  });
+  if (res.status !== 200 && res.status !== 206) return `segment HTTP ${res.status}`;
+  const n = (await res.arrayBuffer()).byteLength;
+  return n > 0 ? null : "segment empty";
 }
 
 async function check(ch) {
