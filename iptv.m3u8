@@ -31,8 +31,8 @@ https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_ch
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
 #EXTINF:-1 tvg-id="NHKWorldJapan.jp@HD" tvg-logo="https://jiotvimages.cdn.jio.com/dare_images/images/NHK_World_Japan.png" group-title="News",NHK World-Japan HD
 https://nhk.lls.pbs.org/index_1080p.m3u8
-#EXTINF:-1 tvg-id="Charge.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/charge.png" group-title="Movies",Charge!
-https://fast-channels.sinclairstoryline.com/CHARGE/index.m3u8
+#EXTINF:-1 tvg-id="EbonyTVbyLionsgate.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/ebony-tv.png" group-title="Movies",Ebony TV by Lionsgate
+https://aegis-cloudfront-1.tubi.video/a0ad4b53-ab3a-48dd-be12-bc7f533c372c/playlist.m3u8
 #EXTINF:-1 tvg-id="GravitasMovies.us" tvg-logo="https://i.imgur.com/H2hD4vT.png" group-title="Movies",Gravitas Movies
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
 #EXTINF:-1 tvg-id="NEWKMOVIES.us" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/new-k-movies.png" group-title="Movies",NEW K.MOVIES
