@@ -12,6 +12,8 @@ _No agent currently mid-task. Last updated by: Claude (Sonnet 5, Claude Code) �
 
 ## Last completed
 
+- **BabyFirst added; lineup now 30 (2026-09-27 ~12:25).** Owner asked for a Kids channel more reliable than Lego. Screened 9 candidates with `tools/deep-check.mjs`: 4 unreadable, 4 warned low-resolution, **BabyFirst passed cleanly** (JW Player CDN, no redirect, real kids animation, WARN 360p on the playback check is normal - master goes up to 480p). Bot `SKILL.md`, `CLAUDE.md`, `AGENTS.md` say 30.
+
 - **Lego Channel and Pluto TV Trending Now removed; lineup now 29 (2026-09-27 ~12:15, `ac79751`).** After a quality measurement of all 31 channels (decoded resolution, audio, reliability) the owner cut the two flagged as definite: **Lego Channel** (failed the playback check 1 of 2 re-runs; plain-HTTP segments) and **Pluto TV Trending Now** (only the Pluto bumper). This closes the long-open "Pluto shows only its logo" owner decision. `git revert ac79751` restores both (previous state `7bf2360`). **`steam-hotel-pluto-proxy` and its status-page binding stay** because Paramount Movie Channel uses them. Groups: ROYS HOTEL / Digital TV Thai (11) / News (6) / Movies (6) / Sports (4) / Kids (1 - Toon Goggles). Low-resolution channels still in (360-432p, the only working movie channels): Paramount, Hallmark, Rakuten Viki - the owner did not choose to cut them. Bot `SKILL.md` expects 29; `CLAUDE.md`/`AGENTS.md` updated.
 
 - **Series group folded back into Movies (2026-09-27 ~11:55).** Owner: "รวมกลุ่ม Series เข้า Movies" - Series had only Rakuten Viki after the last trim. Movies now has 7 channels (Gravitas, Pluto TV Trending Now, MovieSphere, Hallmark, NEW K.MOVIES, Paramount Movie Channel, Rakuten Viki); there is no Series group any more. Still 31 channels.
