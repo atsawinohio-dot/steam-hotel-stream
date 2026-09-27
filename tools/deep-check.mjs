@@ -30,7 +30,9 @@ const MIN_MOTION = 0.05;      // max YDIF between sampled frames; below = frozen
 // a segment by hand): Toon Goggles' Amagi ad-insertion segment URLs do not end in
 // .ts, which ffmpeg's HLS demuxer rejects ("Empty segment"). The GitHub segment
 // check covers them instead.
-const FFMPEG_CANNOT_READ = new Set(["Toon Goggles"]);
+// (No longer needed: `-allowed_segment_extensions ALL -extension_picky 0` in probe()
+// makes ffmpeg read them. Kept as an escape hatch for any channel that still fails.)
+const FFMPEG_CANNOT_READ = new Set([]);
 const args = process.argv.slice(2);
 
 async function loadChannels() {
@@ -49,7 +51,11 @@ async function loadChannels() {
 function probe(url) {
   return new Promise((resolve) => {
     const ff = spawn("ffmpeg", [
-      "-hide_banner", "-nostdin", "-t", String(SECONDS), "-i", url,
+      "-hide_banner", "-nostdin",
+      // Amagi ad-insertion segment URLs (Toon Goggles, Vevo, Curiosity ...) do not
+      // end in .ts; ffmpeg 7+/8 refuses them unless told otherwise.
+      "-allowed_segment_extensions", "ALL", "-extension_picky", "0",
+      "-t", String(SECONDS), "-i", url,
       "-vf", "fps=1,signalstats,metadata=print:file=-",
       "-af", "volumedetect", "-f", "null", "-",
     ]);

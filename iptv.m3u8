@@ -47,6 +47,16 @@ https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
 https://d6dg3ebeih71x.cloudfront.net/Gravitas_Movies1080p.m3u8
 #EXTINF:-1 tvg-id="PlutoTVTrendingNow.us" tvg-logo="https://images.pluto.tv/channels/673247127d5da5000817b4d6/colorLogoPNG.png" group-title="Movies",Pluto TV Trending Now
 https://steam-hotel-pluto-proxy.tiny-hall-8718.workers.dev/673247127d5da5000817b4d6.m3u8
+#EXTINF:-1 tvg-id="StingrayGreatestHits.ca" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/stingray-music.png" group-title="Music",Stingray Greatest Hits
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883053
+#EXTINF:-1 tvg-id="QelloConcertsbyStingray.ca" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/qello-concerts.png" group-title="Music",Qello Concerts by Stingray
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883052
+#EXTINF:-1 tvg-id="ZenLIFEbyStingray.ca" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/stingray-music.png" group-title="Music",ZenLIFE by Stingray
+https://lotus.stingray.com/manifest/zenlife-zen001-montreal/samsungtvplus/master.m3u8
+#EXTINF:-1 tvg-id="WildEarth.za" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/wildearth.png" group-title="Documentary",WildEarth
+https://dqga3jatxofgx.cloudfront.net/WildEarth.m3u8
+#EXTINF:-1 tvg-id="TerraMaterWILD.de" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/terra-mater-wild.png" group-title="Documentary",Terra Mater WILD
+https://amg01775-amg01775c1-amgplt0343.playout.now3.amagi.tv/playlist/amg01775-amg01775c1-amgplt0343/playlist.m3u8
 #EXTINF:-1 tvg-id="TRACE Sport Stars" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f4/TraceSSLogo.png" group-title="Sports",TRACE Sport Stars
 https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
 #EXTINF:-1 tvg-id="Red Bull TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_of_Red_bull.svg" group-title="Sports",Red Bull TV
