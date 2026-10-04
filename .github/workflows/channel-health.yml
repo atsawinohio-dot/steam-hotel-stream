@@ -4,9 +4,9 @@ name: Channel health check
 # A failed run = at least one channel down; GitHub emails the account owner.
 on:
   schedule:
-    # 08:10 and 18:10 Bangkok (UTC+7). GitHub cron is UTC and can start a few
-    # minutes late under load.
-    - cron: "10 1,11 * * *"
+    # Every 2 hours at :10 (matches the laptop bot cadence, set 2026-10-04).
+    # GitHub cron is UTC and can start a few minutes late under load.
+    - cron: "10 */2 * * *"
   workflow_dispatch:
 
 permissions:
