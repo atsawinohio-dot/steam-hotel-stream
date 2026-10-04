@@ -6,7 +6,7 @@ on:
   schedule:
     # Every 2 hours at :10 (matches the laptop bot cadence, set 2026-10-04).
     # GitHub cron is UTC and can start a few minutes late under load.
-    - cron: "10 */2 * * *"
+    - cron: "10 */4 * * *"
   workflow_dispatch:
 
 permissions:
