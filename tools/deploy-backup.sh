@@ -11,6 +11,8 @@ OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT"' EXIT
 
 cp playlist.m3u8 segment_*.ts ebony-tv.m3u8 stadium.m3u8 one31.m3u8 gmm25.m3u8 "$OUT"/
+# Optional channel 1 inserts (e.g. match_*.ts football cards); skip quietly when none are in use.
+for f in match_*.ts; do if [ -e "$f" ]; then cp "$f" "$OUT"/; fi; done
 cp -r logos "$OUT"/logos
 # Point channel 1, logos and our own masters at the backup host, so it works with GitHub down.
 sed "s#${PRIMARY}#${BACKUP}#g" iptv.m3u8 > "$OUT/iptv.m3u8"
