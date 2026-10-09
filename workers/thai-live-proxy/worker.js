@@ -33,7 +33,7 @@ const CHANNELS = {
   },
   tnn16: {
     mode: "signer",
-    signUrl: "https://www.tnnthailand.com/content-api/signer-url?prefix=/live",
+    signUrl: "https://www.tnnthailand.com/content-api/signer-url/?prefix=/live",
     referer: "https://www.tnnthailand.com/live",
     bandwidth: 3500000,
     kvKey: "tnn16_signed_url",
