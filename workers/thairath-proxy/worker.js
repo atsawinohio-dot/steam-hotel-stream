@@ -45,6 +45,59 @@ function upstream(path) {
   });
 }
 
+// How many of the newest segments to publish (2 s each, so ~60 s).
+// Since 2026-11 the origin is an SSAI feed that lists 600 segments (~20 min,
+// ~92 KB) and marks ad breaks with SCTE-35 `#EXT-X-DATERANGE` tags. The
+// hotel's Samsung TV stopped playing the channel (owner report 2026-11-18)
+// while ffmpeg still played it, so the playlist is reduced to what every
+// other channel looks like: a short live window with no ad-marker tags.
+const KEEP_SEGMENTS = 30;
+
+// Tags that only carry ad-break metadata; dropping them changes nothing a
+// player needs to decode the stream.
+const AD_TAG = /^#EXT-X-(DATERANGE|CUE-OUT|CUE-OUT-CONT|CUE-IN|SCTE35|SPLICEPOINT|ASSET)\b|^#EXT-OATCLS-SCTE35/;
+
+// Header tags that describe the whole playlist rather than one segment.
+const HEADER_TAG = /^#(EXTM3U|EXT-X-VERSION|EXT-X-TARGETDURATION|EXT-X-MEDIA-SEQUENCE|EXT-X-DISCONTINUITY-SEQUENCE|EXT-X-PLAYLIST-TYPE|EXT-X-INDEPENDENT-SEGMENTS|EXT-X-ALLOW-CACHE)\b/;
+
+function tidyPlaylist(body, segmentUrl) {
+  const header = [];
+  const groups = []; // each: { tags: [], uri }
+  let pending = [];
+  for (const raw of body.split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith("#")) {
+      if (AD_TAG.test(line)) continue;
+      if (HEADER_TAG.test(line)) header.push(line);
+      else pending.push(line);
+      continue;
+    }
+    // Segment references are bare filenames; point them back at this
+    // Worker so they carry the Referer too.
+    groups.push({ tags: pending, uri: segmentUrl(line.split("/").pop()) });
+    pending = [];
+  }
+
+  const drop = Math.max(0, groups.length - KEEP_SEGMENTS);
+  const dropped = groups.slice(0, drop);
+  const kept = groups.slice(drop);
+  const droppedDisc = dropped.filter((g) =>
+    g.tags.includes("#EXT-X-DISCONTINUITY")
+  ).length;
+
+  const out = header.map((h) => {
+    let m = /^#EXT-X-MEDIA-SEQUENCE:(\d+)/.exec(h);
+    if (m) return `#EXT-X-MEDIA-SEQUENCE:${Number(m[1]) + drop}`;
+    m = /^#EXT-X-DISCONTINUITY-SEQUENCE:(\d+)/.exec(h);
+    if (m) return `#EXT-X-DISCONTINUITY-SEQUENCE:${Number(m[1]) + droppedDisc}`;
+    return h;
+  });
+  for (const g of kept) out.push(...g.tags, g.uri);
+  out.push(...pending); // e.g. #EXT-X-ENDLIST, if it ever appears
+  return out.join("\n") + "\n";
+}
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -70,16 +123,9 @@ export default {
           });
         }
         const body = await res.text();
-        // Segment references are bare filenames; point them back at this
-        // Worker so they carry the Referer too.
-        const rewritten = body
-          .split("\n")
-          .map((line) => {
-            const t = line.trim();
-            if (!t || t.startsWith("#")) return line;
-            return `${url.origin}/s/${QUALITY}/${t.split("/").pop()}`;
-          })
-          .join("\n");
+        const rewritten = tidyPlaylist(body, (name) =>
+          `${url.origin}/s/${QUALITY}/${name}`
+        );
         return new Response(rewritten, {
           headers: {
             ...CORS_HEADERS,

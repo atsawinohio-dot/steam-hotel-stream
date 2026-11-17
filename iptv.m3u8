@@ -11,6 +11,8 @@ https://steam-hotel-ch8-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 https://steam-hotel-mcot-proxy.tiny-hall-8718.workers.dev/live/playlist.m3u8
 #EXTINF:-1 tvg-id="TNN16.th" tvg-name="TNN16" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/tnn16.png",TNN16
 https://steam-hotel-thai-live-proxy.tiny-hall-8718.workers.dev/tnn16/playlist_720p.m3u8
+#EXTINF:-1 tvg-id="ThairathTV.th" tvg-name="Thairath TV 32" group-title="Digital TV Thai" tvg-logo="https://atsawinohio-dot.github.io/steam-hotel-stream/logos/thairath-tv-32.png",Thairath TV 32
+https://steam-hotel-thairath-proxy.tiny-hall-8718.workers.dev/live/playlist_720p.m3u8
 #EXTINF:-1 tvg-id="3HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/3/32/Ch.3_Logo_%281970%29.png" group-title="Digital TV Thai",3HD
 https://steam-hotel-ch3-proxy.tiny-hall-8718.workers.dev/live/720p/index.m3u8
 #EXTINF:-1 tvg-id="AmarinTV.th" tvg-logo="https://www.amarintv.com/assets/images/global/logo_amarintv34HD.svg" group-title="Digital TV Thai",Amarin TV HD
