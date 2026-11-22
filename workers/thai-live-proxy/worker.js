@@ -51,6 +51,13 @@ const CHANNELS = {
     pinBandwidth: 2128000, // the 1280x720 rung
     bandwidth: 2128000,
   },
+  stadium: {
+    mode: "master",
+    masterUrl: "https://wurl120sports.global.transmit.live/hls/679a907dce42a042c23ace37/v1/stadium_gracenote/samsung_us/latest/main/hls/playlist.m3u8",
+    targetResolution: "1920x1080",
+    bandwidth: 5158423,
+    resolution: "1920x1080",
+  },
 };
 
 // Tokens last ~6h; refresh well before they lapse.
@@ -117,20 +124,49 @@ async function pinnedMaster(id) {
   const lines = (await res.text()).split(/\r?\n/);
 
   let variant = null;
-  for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].startsWith("#EXT-X-STREAM-INF")) continue;
-    const bw = Number((lines[i].match(/BANDWIDTH=(\d+)/) || [])[1]);
-    if (bw === cfg.pinBandwidth) {
-      variant = lines[i + 1].trim();
-      break;
+  let chosenBw = cfg.bandwidth;
+  let chosenRes = cfg.resolution || "1280x720";
+
+  if (cfg.targetResolution) {
+    let bestVariant = null;
+    let maxBw = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].startsWith("#EXT-X-STREAM-INF")) continue;
+      const ref = lines.slice(i + 1).find((l) => l.trim() && !l.startsWith("#"));
+      if (!ref) continue;
+      const bw = Number((lines[i].match(/BANDWIDTH=(\d+)/) || [])[1] || 0);
+      const resMatch = (lines[i].match(/RESOLUTION=([\dx]+)/) || [])[1];
+      if (resMatch === cfg.targetResolution) {
+        bestVariant = ref.trim();
+        chosenBw = bw || cfg.bandwidth;
+        chosenRes = resMatch;
+        break;
+      }
+      if (bw > maxBw) {
+        maxBw = bw;
+        bestVariant = ref.trim();
+        chosenBw = bw;
+        if (resMatch) chosenRes = resMatch;
+      }
+    }
+    variant = bestVariant;
+  } else {
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].startsWith("#EXT-X-STREAM-INF")) continue;
+      const bw = Number((lines[i].match(/BANDWIDTH=(\d+)/) || [])[1]);
+      if (bw === cfg.pinBandwidth) {
+        variant = lines[i + 1].trim();
+        break;
+      }
     }
   }
-  if (!variant) throw new Error(`Master for ${id} no longer offers BANDWIDTH=${cfg.pinBandwidth}`);
+
+  if (!variant) throw new Error(`Master for ${id} has no suitable variant`);
 
   return [
     "#EXTM3U",
     "#EXT-X-VERSION:3",
-    `#EXT-X-STREAM-INF:BANDWIDTH=${cfg.bandwidth},RESOLUTION=1280x720`,
+    `#EXT-X-STREAM-INF:BANDWIDTH=${chosenBw},RESOLUTION=${chosenRes}`,
     new URL(variant, res.url).toString(),
     "",
   ].join("\n");
@@ -142,13 +178,13 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS_HEADERS });
 
     if (url.pathname === "/" || url.pathname === "") {
-      const routes = Object.keys(CHANNELS).map((id) => `/${id}/playlist_720p.m3u8`);
-      return new Response(`Steam Hotel Thai live auto-refresh manifests. Use ${routes.join(" or ")}`, {
+      const routes = Object.keys(CHANNELS).map((id) => `/${id}/playlist.m3u8`);
+      return new Response(`Steam Hotel live auto-refresh manifests. Use ${routes.join(" or ")}`, {
         headers: CORS_HEADERS,
       });
     }
 
-    const match = url.pathname.match(/^\/([a-z0-9]+)\/playlist_720p\.m3u8$/);
+    const match = url.pathname.match(/^\/([a-z0-9]+)\/(?:playlist_720p|playlist_1080p|playlist)\.m3u8$/);
     const id = match && CHANNELS[match[1]] ? match[1] : null;
     if (!id) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
 
